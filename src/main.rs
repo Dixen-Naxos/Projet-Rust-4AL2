@@ -3,6 +3,7 @@ use std::str;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::ptr::null;
+use std::time::Instant;
 use byteorder::{ByteOrder, BigEndian};
 use hex::FromHexError;
 use serde_json::{json, Value};
@@ -89,6 +90,7 @@ fn main() {
         let str = read(stream.try_clone().expect("Error cloning stream"));
         //println!("message : {}", str);
         if str["Challenge"].to_string() != "null" {
+            let now = Instant::now();
             let mut message = str["Challenge"]["MD5HashCash"]["message"].to_string();
             //let mut message = "The Isa's funny basket eats our nervous basket.".to_string();
 
@@ -104,12 +106,16 @@ fn main() {
             let mut val = md5::compute(completeSeed.clone() + &message); // a modifier
             let momo = str["Challenge"]["MD5HashCash"]["complexity"].to_string().parse::<i32>().unwrap();
             //let momo = "16".to_string().parse::<i32>().unwrap();
+
             while true {
-                completeSeed = "".to_string();
-                while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
+            //while find < momo {
+                completeSeed = "0000000000000000".to_string();
+               /*while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
                     completeSeed.push('0');
-                }
-                completeSeed.push_str(&*hex::encode(seed.to_string()));
+                }*/
+                let hexa = hex::encode(seed.to_string());
+                completeSeed = completeSeed[0..16 - hexa.len()].to_string();
+                completeSeed.push_str(&*hexa.to_string());
                 val = md5::compute(completeSeed.clone() + &message);
                 let mut binary_value = convert_to_binary_from_hex( &*format!("{:X}", val) ).to_string();
                 binary_value = binary_value[0..momo as usize].to_string();
@@ -117,17 +123,23 @@ fn main() {
                 if isize::from_str_radix(&*binary_value, 2).unwrap() == 0 {
                     break
                 }
+                seed = seed+1;
                 /*for i in 0..momo {
                     if binary_value.chars().nth(i as usize).unwrap() == '0' {
                         find = find+1
                     }
+                }
+                if find < momo{
+                    seed = seed+1;
+                    find = 0;
                 }*/
-                //if find < momo{
-                seed = seed+1;
-                //find = 0;
-               // }
+                if now.elapsed().as_millis() > 1900 {
+                    println!("Viré");
+                    break
+                }
             }
-
+            let elapsed_time = now.elapsed();
+            println!("Running boucle while took {} ms.", elapsed_time.as_millis());
             let MD5HashCashValue : MD5HashCashValue = MD5HashCashValue {
                 //seed : "0x".to_string()+ &*completeSeed,
                 seed : u64::from_str_radix(&*completeSeed, 16).expect("Ta race"),
