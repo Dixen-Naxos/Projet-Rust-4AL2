@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 use serde::{Deserialize, Serialize};
 use hexutil;
 
+
 #[derive(Serialize, Deserialize)]
 struct ChallengeResult {
     ChallengeResult : ChallengeResultValue
@@ -185,6 +186,8 @@ fn nonogram_solver(mut stream: TcpStream) {
         let _test = Nonogram::new(_data);
 
         let _out : NonogramSolverOutput = Nonogram::solve(&_test);
+
+        println!("{}", Nonogram::verify(&_test, &_out));
 
         let answer : NonogramAnswer = NonogramAnswer {
             NonogramSolver : _out
