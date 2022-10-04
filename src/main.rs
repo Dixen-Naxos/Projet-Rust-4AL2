@@ -119,7 +119,7 @@ impl Challenge for Nonogram {
 
     fn solve(&self) -> Self::Output {
         let mut _data : NonogramSolverOutput = NonogramSolverOutput {
-            grid: "1".to_string()
+            grid: self.input.rows[0][0].to_string()
         };
         _data
     }
@@ -168,7 +168,10 @@ fn main() {
     }
 
     while true {
+
+        // .\server.exe --debug -g nonogram-solver
         nonogram_solver(stream.try_clone().expect("Error cloning stream"));
+
         //MD5(stream.try_clone().expect("Error cloning stream"));
     }
 
@@ -178,7 +181,7 @@ fn main() {
 
 fn nonogram_solver(mut stream: TcpStream) {
     let str = read(stream.try_clone().expect("Error cloning stream"));
-    //println!("message : {}", str);
+    println!("message : {}", str);
     if str["Challenge"].to_string() != "null" {
 
         let _data : NonogramSolverInput = serde_json::from_str(&*str["Challenge"]["NonogramSolver"].to_string()).unwrap();
