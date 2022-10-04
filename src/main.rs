@@ -209,7 +209,7 @@ fn nonogram_solver(mut stream: TcpStream) {
     }
 }
 
-/*
+
 fn MD5(mut stream: TcpStream) {
 
     let str = read(stream.try_clone().expect("Error cloning stream"));
@@ -295,7 +295,7 @@ fn MD5(mut stream: TcpStream) {
         let str = json;
         send(cloned_stream, &*str);
     }
-}*/
+}
 
 pub fn hex_to_u64(b: &[u8]) -> Option<u64> {
     let a = std::str::from_utf8(b).ok()?;
