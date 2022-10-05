@@ -51,6 +51,42 @@ enum SubscribeError {
     InvalidName
 }
 
+trait Challenge {
+    type Input;
+
+    type Output;
+
+    fn name() -> String;
+
+    fn new(input: Self::Input) -> Self;
+
+    fn solve(&self) -> Self::Output;
+
+    fn verify(&self, answer: &Self::Output) -> bool;
+}
+
+
+impl Challenge for MD5HashCash {
+    type Input = ();
+    type Output = ();
+
+    fn name() -> String {
+        todo!()
+    }
+
+    fn new(input: Self::Input) -> Self {
+        todo!()
+    }
+
+    fn solve(&self) -> Self::Output {
+        todo!()
+    }
+
+    fn verify(&self, answer: &Self::Output) -> bool {
+        todo!()
+    }
+}
+
 fn main() {
     let mut args: Vec<String> = env::args().collect();
 
@@ -85,93 +121,110 @@ fn main() {
     }else{
         println!("SubscribeResult : {}", subscribeResult["SubscribeResult"]);
     }
-
+    let mut countKick = 0;
     while true {
         let str = read(stream.try_clone().expect("Error cloning stream"));
         //println!("message : {}", str);
         if str["Challenge"].to_string() != "null" {
-            let now = Instant::now();
-            let mut message = str["Challenge"]["MD5HashCash"]["message"].to_string();
-            //let mut message = "The Isa's funny basket eats our nervous basket.".to_string();
+            if str["Challenge"]["MD5HashCash"].to_string() != "null" {
+                let now = Instant::now();
+                let mut message = str["Challenge"]["MD5HashCash"]["message"].to_string();
+                //let mut message = "The Isa's funny basket eats our nervous basket.".to_string();
 
-            let message = message[1..message.len() - 1].to_string();
-            let mut find = 0;
-            let mut seed = 0;
-            //let mut binary_value= "".to_string();
-            let mut completeSeed = "".to_owned();
-            while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
-                completeSeed.push('0');
-            }
-            completeSeed.push_str(&*hex::encode(seed.to_string()));
-            let mut val = md5::compute(completeSeed.clone() + &message); // a modifier
-            let momo = str["Challenge"]["MD5HashCash"]["complexity"].to_string().parse::<i32>().unwrap();
-            //let momo = "16".to_string().parse::<i32>().unwrap();
+                let message = message[1..message.len() - 1].to_string();
+                let mut find = 0;
+                let mut seed = 0;
 
-            while true {
-            //while find < momo {
-                completeSeed = "0000000000000000".to_string();
-               /*while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
-                    completeSeed.push('0');
-                }*/
+                //let mut binary_value= "".to_string();
+                let mut completeSeed = "0000000000000000".to_owned();
+                /*while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
+                        completeSeed.push('0');
+                    }*/
                 let hexa = hex::encode(seed.to_string());
                 completeSeed = completeSeed[0..16 - hexa.len()].to_string();
                 completeSeed.push_str(&*hexa.to_string());
-                val = md5::compute(completeSeed.clone() + &message);
-                let mut binary_value = convert_to_binary_from_hex( &*format!("{:X}", val) ).to_string();
-                binary_value = binary_value[0..momo as usize].to_string();
-                //println!("binary : {}", binary_value);
-                if isize::from_str_radix(&*binary_value, 2).unwrap() == 0 {
-                    break
-                }
-                seed = seed+1;
-                /*for i in 0..momo {
-                    if binary_value.chars().nth(i as usize).unwrap() == '0' {
-                        find = find+1
+                let mut val = md5::compute(completeSeed.clone() + &message); // a modifier
+                let momo = str["Challenge"]["MD5HashCash"]["complexity"].to_string().parse::<i32>().unwrap();
+                //let momo = "16".to_string().parse::<i32>().unwrap();
+
+                while true {
+                    //while find < momo {
+                    completeSeed = "0000000000000000".to_string();
+                    /*while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
+                            completeSeed.push('0');
+                        }*/
+                    let hexa = hex::encode(seed.to_string());
+                    completeSeed = completeSeed[0..16 - hexa.len()].to_string();
+                    completeSeed.push_str(&*hexa);
+                    val = md5::compute(completeSeed.clone() + &message);
+                    let mut binary_value = convert_to_binary_from_hex(&*format!("{:X}", val)).to_string();
+                    binary_value = binary_value[0..momo as usize].to_string();
+                    //println!("binary : {}", binary_value);
+                    if isize::from_str_radix(&*binary_value, 2).unwrap() == 0 {
+                        break
+                    }
+                    seed = seed + 1;
+                    /*for i in 0..momo {
+                            if binary_value.chars().nth(i as usize).unwrap() == '0' {
+                                find = find+1
+                            }
+                        }
+                        if find < momo{
+                            seed = seed+1;
+                            find = 0;
+                        }*/
+                    if now.elapsed().as_millis() > 1900 {
+                        println!("Viré");
+                        countKick = countKick + 1;
+                        break
                     }
                 }
-                if find < momo{
-                    seed = seed+1;
-                    find = 0;
-                }*/
-                if now.elapsed().as_millis() > 1900 {
-                    println!("Viré");
-                    break
-                }
+                let elapsed_time = now.elapsed();
+
+                println!("Running boucle while took {} ms.", elapsed_time.as_millis());
+                let MD5HashCashValue: MD5HashCashValue = MD5HashCashValue {
+                    //seed : "0x".to_string()+ &*completeSeed,
+                    seed: u64::from_str_radix(&*completeSeed, 16).expect("Ta race"),
+                    hashcode: format!("{:X}", val)
+                };
+
+                let MD5HashCash: MD5HashCash = MD5HashCash {
+                    MD5HashCash: MD5HashCashValue
+                };
+
+                let ChallengeResultValue: ChallengeResultValue = ChallengeResultValue {
+                    answer: MD5HashCash,
+                    next_target: "free_patato".to_string()
+                };
+
+                let result: ChallengeResult = ChallengeResult {
+                    ChallengeResult: ChallengeResultValue
+                };
+                //println!("seed : {}", result.ChallengeResult.answer.MD5HashCash.seed);
+                let mut json: String = serde_json::to_string(&result).unwrap();
+                //let json = json[0..52].to_string() + &*json[53..71].to_string() + &*json[72..json.len() - 1].to_string();
+
+                //let message = message[1..message.len() - 1].to_string();
+                //println!("result : {}", json);
+                //println!("val : {:X} and seed : {} and binaryvalue : {} and message : {}", val, seed,binary_value,message);
+                //println!("3 :");
+                let cloned_stream = stream.try_clone().expect("Error cloning stream");
+                let str = json;
+                send(cloned_stream, &*str);
             }
-            let elapsed_time = now.elapsed();
-            println!("Running boucle while took {} ms.", elapsed_time.as_millis());
-            let MD5HashCashValue : MD5HashCashValue = MD5HashCashValue {
-                //seed : "0x".to_string()+ &*completeSeed,
-                seed : u64::from_str_radix(&*completeSeed, 16).expect("Ta race"),
-                hashcode : format!("{:X}", val)
-            };
-
-            let MD5HashCash : MD5HashCash = MD5HashCash {
-                MD5HashCash : MD5HashCashValue
-            };
-
-            let ChallengeResultValue : ChallengeResultValue = ChallengeResultValue {
-                answer : MD5HashCash,
-                next_target : "free_patato".to_string()
-            };
-
-            let result : ChallengeResult = ChallengeResult{
-                ChallengeResult : ChallengeResultValue
-            };
-            //println!("seed : {}", result.ChallengeResult.answer.MD5HashCash.seed);
-            let mut json : String = serde_json::to_string(&result).unwrap();
-            //let json = json[0..52].to_string() + &*json[53..71].to_string() + &*json[72..json.len() - 1].to_string();
-
-            //let message = message[1..message.len() - 1].to_string();
-            //println!("result : {}", json);
-            //println!("val : {:X} and seed : {} and binaryvalue : {} and message : {}", val, seed,binary_value,message);
-            //println!("3 :");
-            let cloned_stream = stream.try_clone().expect("Error cloning stream");
-            let str = json;
-            send(cloned_stream, &*str);
+            if str["Challenge"]["MonstrousMaze"].to_string() != "null" {
+                println!("grid : {}", str["Challenge"]["MonstrousMaze"]["grid"].to_string())
+            }
         }
+        if str["EndOfGame"].to_string() != "null" {
+            println!("Terminé ! ");
+            break
+        }
+        /*if str["RoundSummary"].to_string() != "null" {
+            if str["RoundSummary"]["chain"][""]
+        }*/
     }
-
+    println!("Countkick = {}", countKick);
     stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
 }
 
