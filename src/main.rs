@@ -259,8 +259,8 @@ fn main() {
     while true {
 
         // .\server.exe --debug -g nonogram-solver
-        //nonogram_solver(stream.try_clone().expect("Error cloning stream"));
-        MD5_solver(stream.try_clone().expect("Error cloning stream"));
+        nonogram_solver(stream.try_clone().expect("Error cloning stream"));
+        //MD5_solver(stream.try_clone().expect("Error cloning stream"));
 
         //MD5(stream.try_clone().expect("Error cloning stream"));
     }
@@ -407,3 +407,4 @@ fn read (mut stream: TcpStream) -> Value {
 
     str
 }
+
