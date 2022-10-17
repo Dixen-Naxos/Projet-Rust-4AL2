@@ -718,3 +718,262 @@ fn read (mut stream: TcpStream) -> Value {
     str
 }
 
+/*test {
+
+use std::path::is_separator;
+use std::str::Lines;
+use digest::generic_array::arr;
+use md5;
+use hex;
+
+struct Node {
+    cost : isize,
+    dead_end: bool,
+    children : [Option<Box<Node>>;4],
+    x : isize,
+    y : isize
+}
+/*impl Copy for Node { }
+
+impl Clone for Node {
+        fn clone(&self) -> Node {
+        *self
+    }
+}*/
+
+fn calculChildrenCost<'a>(arrayLab : &'a mut[&'a mut[char]], mut node: &'a mut Node, startLab_x : isize, startLab_y : isize, endLab_x : isize, endLab_y : isize ) -> &'a mut Node {
+
+    if node.x != 0 {
+        node.children[0] = Option::from(Box::new(Node {
+            cost: abs(node.x - 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x - 1 + endLab_x) + abs(node.y + endLab_y),
+            dead_end: arrayLab[(node.x-1) as usize][node.y as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x - 1,
+            y: node.y
+        }))
+    }
+
+    if node.x != (arrayLab.len() - 1) as isize {
+        node.children[1] = Option::from(Box::new(Node {
+            cost: abs(node.x + 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x + 1 + endLab_x) + abs(node.y + endLab_y),
+            dead_end: arrayLab[(node.x+1) as usize][node.y as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x + 1,
+            y: node.y
+        }))
+    }
+
+    if node.y != 0 {
+        node.children[2] = Option::from(Box::new(Node {
+            cost: abs(node.x + startLab_x) + abs(node.y - 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y - 1 + endLab_y),
+            dead_end: arrayLab[node.x as usize][(node.y-1) as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x,
+            y: node.y - 1
+        }))
+    }
+
+    if node.y != arrayLab[0].len() as isize {
+        node.children[3] = Option::from(Box::new(Node {
+            cost: abs(node.x + startLab_x) + abs(node.y + 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y + 1 + endLab_y),
+            dead_end: arrayLab[node.x as usize][(node.y+1) as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x,
+            y: node.y + 1
+        }))
+    }
+
+    return node;
+}
+
+fn doYouKnowDaWay<'a>(mut node: Node, mut response: String, arrayLab : &'a mut[&'a mut[char]], startLab_x : isize, startLab_y : isize, endLab_x : isize, endLab_y : isize ) -> String {
+    //node = calculChildrenCost(arrayLab,node,startLab_x,startLab_y,endLab_x,endLab_y);
+    if node.x != 0 {
+        node.children[0] = Option::from(Box::new(Node {
+            cost: abs(node.x - 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x - 1 + endLab_x) + abs(node.y + endLab_y),
+            dead_end: arrayLab[(node.x-1) as usize][node.y as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x - 1,
+            y: node.y
+        }))
+    }
+
+    if node.x != (arrayLab.len() - 1) as isize {
+        node.children[1] = Option::from(Box::new(Node {
+            cost: abs(node.x + 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x + 1 + endLab_x) + abs(node.y + endLab_y),
+            dead_end: arrayLab[(node.x+1) as usize][node.y as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x + 1,
+            y: node.y
+        }))
+    }
+
+    if node.y != 0 {
+        node.children[2] = Option::from(Box::new(Node {
+            cost: abs(node.x + startLab_x) + abs(node.y - 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y - 1 + endLab_y),
+            dead_end: arrayLab[node.x as usize][(node.y-1) as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x,
+            y: node.y - 1
+        }))
+    }
+
+    if node.y != arrayLab[0].len() as isize {
+        node.children[3] = Option::from(Box::new(Node {
+            cost: abs(node.x + startLab_x) + abs(node.y + 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y + 1 + endLab_y),
+            dead_end: arrayLab[node.x as usize][(node.y+1) as usize] == '#',
+            children: [None, None, None, None],
+            x: node.x,
+            y: node.y + 1
+        }))
+    }
+
+    let mut min = 2147498847;
+    let mut min_index: isize = -1;
+    for i in 0..4 {
+        if min > node.children[i].as_ref().unwrap().cost && node.children[i].as_ref().unwrap().dead_end == false{
+            min = node.children[i].as_ref().unwrap().cost;
+            min_index = i as isize;
+        }
+    }
+    match min_index {
+        0 => response.push('^'),
+        1 => response.push('v'),
+        2 => response.push('>'),
+        3 => response.push('<'),
+        _ => {
+            node.dead_end = true;
+            return response[0..response.len()-1].to_string();
+        }
+    }
+    if(arrayLab[node.x as usize][node.y as usize] == 'X'){
+        return response
+    }
+    let node : Node = *node.children[min_index as usize].unwrap();
+    response = doYouKnowDaWay( node , response, arrayLab, startLab_x, startLab_y, endLab_x, endLab_y);
+    return response;
+}
+
+fn abs(nb : isize) -> isize {
+    if nb > 0 {
+        return nb;
+    }else {
+        return -nb;
+    }
+}
+
+fn main() {
+    let laby : String = "#I###############################\n# #         # # #     # #   #   #\n# # # ####### # ##### # # # # ###\n# # # # # # #   #   #   # # #   #\n# # # # # # # # # ##### # ### ###\n#   # #   # # #   #     #   #   #\n# # # # ### # ### ### ### ##### #\n# # #   #       #       #       #\n# ### # # ### ##### ######### ###\n#   # #   # # #   #       # #   #\n# ####### # ##### # # ##### # # #\n# #               # # # #     # #\n# # ########### ### # # # # # # #\n# #     # #     # # #   # # # # #\n### # ### ####### ### ##### # ###\n# # #   # #   #     #   # # # # #\n# ### # # # # # ##### ### ### # #\n#   # # #   #     #   #   #   # #\n# ##### # ##### ##### # ### ### #\n#       #   #       # # #       #\n# ##### ##### ### ### # ### ### #\n#   #     # #   # # # #       # #\n# # # # ### ##### # ### # ##### #\n# # # #   # # #   #     #     # #\n# ### ##### # # ### # ### ##### #\n# #                 # #     #   #\n### ######### # ### # # ### # ###\n#   # # #     #   # # # # # #   #\n# ### # # ### ##### ##### # #####\n# # #     # #     #       #     #\n# # # ### # ### ### ##### # ### #\n#   # #   #     #     #   # #   X\n#################################".to_string();
+    let split : Lines = laby.lines();
+    println!("cols : {}", split.clone().nth(0).expect("Not found"));
+    let cols: isize = split.clone().nth(0).expect("Not found").len() as isize;
+    println!("cols : {}", cols);
+    let rows: isize = split.clone().count() as isize;
+    println!("rows : {}", rows);
+    //let mut arrayLab = vec![[0 as u8 ; cols]; rows as usize];
+    let mut arrayLab_raw = vec!['0'; (cols * rows) as usize];
+
+    // Vector of 'width' elements slices
+    let mut arrayLab_base: Vec<_> = arrayLab_raw.as_mut_slice().chunks_mut(cols as usize).collect();
+
+    // Final 2d array `&mut [&mut [_]]`
+    let arrayLab = arrayLab_base.as_mut_slice();
+    arrayLab[0][0] = '2';
+    println!("value : {}", arrayLab[0][0]);
+    let mut count: usize = 0;
+    let mut startLab_x= 0;
+    let mut startLab_y= 0;
+    let mut endLab_x = 0;
+    let mut endLab_y = 0;
+    for i in 0..rows {
+        for j in 0..cols {
+            arrayLab[i as usize][j as usize] = laby.chars().nth(count).expect("IDK");
+            count = count + 1;
+            if arrayLab[i as usize][j as usize] == 'I'{
+                startLab_x = i;
+                startLab_y  = j;
+            }
+            if arrayLab[i as usize][j as usize] == 'X' {
+                endLab_x = i;
+                endLab_y = j;
+            }
+        }
+    }
+    println!("value : {}", arrayLab[1][0]);
+    let mut node = Node {
+        cost: startLab_x + startLab_y + endLab_x + endLab_y,
+        dead_end: false,
+        children: [None, None, None, None],
+        x:startLab_x,
+        y:startLab_y
+    };
+    let mut response = "".to_string();
+    response = doYouKnowDaWay(node, response, arrayLab, startLab_x, startLab_y, endLab_x, endLab_y).to_string();
+
+
+
+
+
+    /*//let mut message = str["Challenge"]["MD5HashCash"]["message"].to_string();
+    let mut message = "The Isa's funny basket eats our nervous basket.".to_string();
+
+    //let message = message[1..message.len() - 1].to_string();
+    let mut find = 0;
+    let mut seed = 1;
+    let mut binary_value= "".to_string();
+    let mut completeSeed = "".to_owned();
+    while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
+        completeSeed.push('0');
+    }
+    completeSeed.push_str(&*hex::encode(seed.to_string()));
+    let mut val = md5::compute(completeSeed.clone() + &message); // a modifier
+    //let momo = str["Challenge"]["MD5HashCash"]["complexity"].to_string().parse::<i32>().unwrap();
+    let momo = "28".to_string().parse::<i32>().unwrap();
+    while find < momo {
+        while completeSeed.len() < 16-hex::encode( seed.to_string()).len() {
+            completeSeed.push('0');
+        }
+        completeSeed.push_str(&*hex::encode(seed.to_string()));
+        val = md5::compute(completeSeed.clone() + &message);
+        binary_value = convert_to_binary_from_hex( &*format!("{:X}", val)).to_string();
+        for i in 0..momo {
+            if binary_value.chars().nth(i as usize).unwrap() == '0' {
+                find = find+1
+            }
+        }
+        if find < momo{
+            seed = seed+1;
+            find = 0;
+            completeSeed = "".to_string();
+        }
+    }
+    println!("val : {:X} and seed : {}", val, completeSeed);
+    println!("binary : {}", binary_value);
+}
+
+fn convert_to_binary_from_hex(hex: &str) -> String {
+    hex.chars().map(to_binary).collect()
+}
+
+fn to_binary(c: char) -> &'static str {
+    match c {
+        '0' => "0000",
+        '1' => "0001",
+        '2' => "0010",
+        '3' => "0011",
+        '4' => "0100",
+        '5' => "0101",
+        '6' => "0110",
+        '7' => "0111",
+        '8' => "1000",
+        '9' => "1001",
+        'A' => "1010",
+        'B' => "1011",
+        'C' => "1100",
+        'D' => "1101",
+        'E' => "1110",
+        'F' => "1111",
+        _ => "",
+    }*/
+}
+}*/
