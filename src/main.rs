@@ -722,135 +722,187 @@ fn read (mut stream: TcpStream) -> Value {
 
 use std::path::is_separator;
 use std::str::Lines;
-use digest::generic_array::arr;
 use md5;
 use hex;
 
 struct Node {
     cost : isize,
     dead_end: bool,
-    children : [Option<Box<Node>>;4],
+    east : Option<Box<Node>>,
+    west : Option<Box<Node>>,
+    north : Option<Box<Node>>,
+    south : Option<Box<Node>>,
     x : isize,
     y : isize
 }
-/*impl Copy for Node { }
 
-impl Clone for Node {
-        fn clone(&self) -> Node {
-        *self
-    }
-}*/
-
-fn calculChildrenCost<'a>(arrayLab : &'a mut[&'a mut[char]], mut node: &'a mut Node, startLab_x : isize, startLab_y : isize, endLab_x : isize, endLab_y : isize ) -> &'a mut Node {
-
-    if node.x != 0 {
-        node.children[0] = Option::from(Box::new(Node {
-            cost: abs(node.x - 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x - 1 + endLab_x) + abs(node.y + endLab_y),
-            dead_end: arrayLab[(node.x-1) as usize][node.y as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x - 1,
-            y: node.y
-        }))
-    }
-
-    if node.x != (arrayLab.len() - 1) as isize {
-        node.children[1] = Option::from(Box::new(Node {
-            cost: abs(node.x + 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x + 1 + endLab_x) + abs(node.y + endLab_y),
-            dead_end: arrayLab[(node.x+1) as usize][node.y as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x + 1,
-            y: node.y
-        }))
-    }
-
-    if node.y != 0 {
-        node.children[2] = Option::from(Box::new(Node {
-            cost: abs(node.x + startLab_x) + abs(node.y - 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y - 1 + endLab_y),
-            dead_end: arrayLab[node.x as usize][(node.y-1) as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x,
-            y: node.y - 1
-        }))
-    }
-
-    if node.y != arrayLab[0].len() as isize {
-        node.children[3] = Option::from(Box::new(Node {
-            cost: abs(node.x + startLab_x) + abs(node.y + 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y + 1 + endLab_y),
-            dead_end: arrayLab[node.x as usize][(node.y+1) as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x,
-            y: node.y + 1
-        }))
-    }
-
-    return node;
+struct LabyData {
+    startLab_x : isize,
+    startLab_y : isize,
+    endLab_x : isize,
+    endLab_y : isize
 }
 
-fn doYouKnowDaWay<'a>(mut node: Node, mut response: String, arrayLab : &'a mut[&'a mut[char]], startLab_x : isize, startLab_y : isize, endLab_x : isize, endLab_y : isize ) -> String {
-    //node = calculChildrenCost(arrayLab,node,startLab_x,startLab_y,endLab_x,endLab_y);
+impl Node {
+    pub fn new(cost: isize, x : isize, y : isize, deadEnd : bool) -> Self {
+        Node {
+            cost,
+            dead_end : deadEnd,
+            east: None,
+            west: None,
+            north : None,
+            south : None,
+            x,
+            y
+        }
+    }
+    pub fn east(&mut self, node: Node){
+        self.east = Some(Box::new(node));
+    }
+
+    pub fn west(&mut self, node: Node){
+        self.west = Some(Box::new(node));
+    }
+
+    pub fn north(&mut self, node: Node){
+        self.north = Some(Box::new(node));
+    }
+
+    pub fn south(&mut self, node: Node){
+        self.south = Some(Box::new(node));
+    }
+    pub fn deadEnd(&mut self, deadEnd : bool){
+        self.dead_end = deadEnd;
+    }
+}
+
+fn calculChildrenCost(arrayLab : &mut[&mut[char]], node: &mut Node, startLab_x : isize, startLab_y : isize, endLab_x : isize, endLab_y : isize ){
+    let mut cost = 0;
+    println!("salut");
     if node.x != 0 {
-        node.children[0] = Option::from(Box::new(Node {
-            cost: abs(node.x - 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x - 1 + endLab_x) + abs(node.y + endLab_y),
-            dead_end: arrayLab[(node.x-1) as usize][node.y as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x - 1,
-            y: node.y
-        }))
+        cost = abs(node.x - 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x - 1 + endLab_x) + abs(node.y + endLab_y);
+        let mut node2 = Node::new(cost,node.x-1, node.y, arrayLab[(node.x - 1) as usize][node.y as usize] == '#');
+        node.north(node2);
+
+        println!("north : {}", arrayLab[(node.x - 1) as usize][node.y as usize] == '#');
     }
 
     if node.x != (arrayLab.len() - 1) as isize {
-        node.children[1] = Option::from(Box::new(Node {
-            cost: abs(node.x + 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x + 1 + endLab_x) + abs(node.y + endLab_y),
-            dead_end: arrayLab[(node.x+1) as usize][node.y as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x + 1,
-            y: node.y
-        }))
+        cost = abs(node.x + 1 + startLab_x) + abs(node.y + startLab_y) + abs(node.x + 1 + endLab_x) + abs(node.y + endLab_y);
+        node.south(Node::new(cost,node.x+1, node.y,arrayLab[(node.x + 1) as usize][node.y as usize] == '#'));
+        println!("south value : {}, x : {}, y : {}", arrayLab[(node.x + 1) as usize][node.y as usize], node.x + 1, node.y);
+        println!("south : {}", arrayLab[(node.x + 1) as usize][node.y as usize] == '#');
     }
 
     if node.y != 0 {
-        node.children[2] = Option::from(Box::new(Node {
-            cost: abs(node.x + startLab_x) + abs(node.y - 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y - 1 + endLab_y),
-            dead_end: arrayLab[node.x as usize][(node.y-1) as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x,
-            y: node.y - 1
-        }))
+        cost = abs(node.x + startLab_x) + abs(node.y - 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y - 1 + endLab_y);
+        node.west(Node::new(cost,node.x, node.y - 1,arrayLab[node.x as usize][(node.y - 1) as usize] == '#'));
+        println!("east : {}", arrayLab[node.x as usize][(node.y - 1) as usize] == '#');
     }
 
     if node.y != arrayLab[0].len() as isize {
-        node.children[3] = Option::from(Box::new(Node {
-            cost: abs(node.x + startLab_x) + abs(node.y + 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y + 1 + endLab_y),
-            dead_end: arrayLab[node.x as usize][(node.y+1) as usize] == '#',
-            children: [None, None, None, None],
-            x: node.x,
-            y: node.y + 1
-        }))
+        cost = abs(node.x + startLab_x) + abs(node.y + 1 + startLab_y) + abs(node.x + endLab_x) + abs(node.y + 1 + endLab_y);
+        node.east(Node::new(cost,node.x, node.y + 1,arrayLab[node.x as usize][(node.y + 1) as usize] == '#'));
+        println!("west : {}", arrayLab[node.x as usize][(node.y + 1) as usize] == '#');
+    }
+}
+fn min(node : &mut Box<Node>) -> Vec<i32> {
+    let mut vec = Vec::new();
+    let mut vec2 = Vec::new();
+    for i in 0..4{
+        vec.push(0);
+    }
+    for i in 0..4 {
+        if vec[0] == 0 && node.north.is_some() && !node.north.as_ref().unwrap().dead_end
+            && ( vec[3] == 1 || node.west.is_none() || node.west.as_ref().unwrap().dead_end || node.north.as_ref().unwrap().cost < node.west.as_ref().unwrap().cost)
+            && ( vec[2] == 1 || node.east.is_none() || node.east.as_ref().unwrap().dead_end || node.north.as_ref().unwrap().cost < node.east.as_ref().unwrap().cost)
+            && ( vec[1] == 1 || node.south.is_none() || node.south.as_ref().unwrap().dead_end || node.north.as_ref().unwrap().cost < node.south.as_ref().unwrap().cost){
+            vec2.push(0);
+            vec[0] = 1;
+        }
+        if vec[1] == 0 && node.south.is_some() && !node.south.as_ref().unwrap().dead_end
+            && ( vec[3] == 1 || node.west.is_none() || node.west.as_ref().unwrap().dead_end || node.south.as_ref().unwrap().cost < node.west.as_ref().unwrap().cost)
+            && ( vec[2] == 1 || node.east.is_none() || node.east.as_ref().unwrap().dead_end || node.south.as_ref().unwrap().cost < node.east.as_ref().unwrap().cost)
+            && ( vec[0] == 1 || node.north.is_none() || node.north.as_ref().unwrap().dead_end || node.south.as_ref().unwrap().cost < node.north.as_ref().unwrap().cost){
+            vec2.push(1);
+            vec[1] = 1;
+        }
+        if vec[2] == 0 && node.east.is_some() && !node.east.as_ref().unwrap().dead_end
+            && ( vec[3] == 1 || node.west.is_none() || node.west.as_ref().unwrap().dead_end || node.east.as_ref().unwrap().cost < node.west.as_ref().unwrap().cost)
+            && ( vec[0] == 1 || node.north.is_none() || node.north.as_ref().unwrap().dead_end || node.east.as_ref().unwrap().cost < node.north.as_ref().unwrap().cost)
+            && ( vec[1] == 1 || node.south.is_none() || node.south.as_ref().unwrap().dead_end || node.east.as_ref().unwrap().cost < node.south.as_ref().unwrap().cost){
+            vec2.push(2);
+            vec[2] = 1;
+        }
+        if vec[3] == 0 && node.west.is_some() && !node.west.as_ref().unwrap().dead_end
+            && ( vec[1] == 1 || node.south.is_none() || node.south.as_ref().unwrap().dead_end || node.west.as_ref().unwrap().cost < node.south.as_ref().unwrap().cost)
+            && ( vec[2] == 1 || node.east.is_none() || node.east.as_ref().unwrap().dead_end || node.west.as_ref().unwrap().cost < node.east.as_ref().unwrap().cost)
+            && ( vec[0] == 1 || node.north.is_none() || node.north.as_ref().unwrap().dead_end || node.west.as_ref().unwrap().cost < node.north.as_ref().unwrap().cost){
+            vec2.push(3);
+            vec[3] = 1;
+        }
     }
 
-    let mut min = 2147498847;
-    let mut min_index: isize = -1;
-    for i in 0..4 {
-        if min > node.children[i].as_ref().unwrap().cost && node.children[i].as_ref().unwrap().dead_end == false{
-            min = node.children[i].as_ref().unwrap().cost;
-            min_index = i as isize;
-        }
+    return vec2;
+}
+
+fn doYouKnowDaWay<'a>(node: &'a mut Option<Box<Node>>, mut response: &'a mut String, arrayLab : &'a mut[&'a mut[char]], labyData : LabyData) -> &'a mut String {
+    match node {
+        Some(ref mut n) => {
+            calculChildrenCost(arrayLab, n, labyData.startLab_x, labyData.startLab_y, labyData.endLab_x, labyData.endLab_y);
+
+            if n.east.is_some() && n.east.as_ref().unwrap().dead_end == false {
+                println!("cost east : {}", n.east.as_ref().unwrap().cost)
+            }
+            if n.west.is_some() && n.west.as_ref().unwrap().dead_end == false {
+                println!("cost west : {}", n.west.as_ref().unwrap().cost)
+            }
+            if n.north.is_some() && n.north.as_ref().unwrap().dead_end == false {
+                println!("cost north : {}", n.north.as_ref().unwrap().cost)
+            }
+            if n.south.is_some() && n.south.as_ref().unwrap().dead_end == false {
+                println!("cost south : {}", n.south.as_ref().unwrap().cost)
+            }
+            let mut node_min = min(n);
+            println!("cost min : {}", node_min[0]);
+
+            if(arrayLab[n.x as usize][n.y as usize] == 'X'){
+                return response
+            }
+            let mut res;
+            for i in 0..node_min.len() {
+                match node_min[i] {
+                    0 => {
+                        response.push('^');
+                        res =  doYouKnowDaWay(&mut n.north, response, arrayLab, labyData);
+                    },
+                    1 => {
+                        response.push('v');
+                        res = doYouKnowDaWay( &mut n.south , response, arrayLab, labyData);
+                    },
+                    2 => {
+                        response.push('>');
+                        res = doYouKnowDaWay( &mut n.east , response, arrayLab, labyData);
+                    },
+                    3 => {
+                        response.push('<');
+                        res = doYouKnowDaWay( &mut n.west , response, arrayLab, labyData);
+                    },
+                    _ => {
+                        n.deadEnd(true);
+                        response.push('D');
+                        return response;
+                    }
+
+                }
+                if res.as_bytes()[res.len()-1] != 68 {
+                    return res;
+                }
+            }
+
+        },
+        None=> println!("Has no value")
     }
-    match min_index {
-        0 => response.push('^'),
-        1 => response.push('v'),
-        2 => response.push('>'),
-        3 => response.push('<'),
-        _ => {
-            node.dead_end = true;
-            return response[0..response.len()-1].to_string();
-        }
-    }
-    if(arrayLab[node.x as usize][node.y as usize] == 'X'){
-        return response
-    }
-    let node : Node = *node.children[min_index as usize].unwrap();
-    response = doYouKnowDaWay( node , response, arrayLab, startLab_x, startLab_y, endLab_x, endLab_y);
     return response;
 }
 
@@ -866,6 +918,7 @@ fn main() {
     let laby : String = "#I###############################\n# #         # # #     # #   #   #\n# # # ####### # ##### # # # # ###\n# # # # # # #   #   #   # # #   #\n# # # # # # # # # ##### # ### ###\n#   # #   # # #   #     #   #   #\n# # # # ### # ### ### ### ##### #\n# # #   #       #       #       #\n# ### # # ### ##### ######### ###\n#   # #   # # #   #       # #   #\n# ####### # ##### # # ##### # # #\n# #               # # # #     # #\n# # ########### ### # # # # # # #\n# #     # #     # # #   # # # # #\n### # ### ####### ### ##### # ###\n# # #   # #   #     #   # # # # #\n# ### # # # # # ##### ### ### # #\n#   # # #   #     #   #   #   # #\n# ##### # ##### ##### # ### ### #\n#       #   #       # # #       #\n# ##### ##### ### ### # ### ### #\n#   #     # #   # # # #       # #\n# # # # ### ##### # ### # ##### #\n# # # #   # # #   #     #     # #\n# ### ##### # # ### # ### ##### #\n# #                 # #     #   #\n### ######### # ### # # ### # ###\n#   # # #     #   # # # # # #   #\n# ### # # ### ##### ##### # #####\n# # #     # #     #       #     #\n# # # ### # ### ### ##### # ### #\n#   # #   #     #     #   # #   X\n#################################".to_string();
     let split : Lines = laby.lines();
     println!("cols : {}", split.clone().nth(0).expect("Not found"));
+    println!("cols : {}", split.clone().nth(1).expect("Not found"));
     let cols: isize = split.clone().nth(0).expect("Not found").len() as isize;
     println!("cols : {}", cols);
     let rows: isize = split.clone().count() as isize;
@@ -887,11 +940,15 @@ fn main() {
     let mut endLab_y = 0;
     for i in 0..rows {
         for j in 0..cols {
+            if laby.chars().nth(count).expect("IDK") == '\n' {
+                count = count + 1;
+            }
             arrayLab[i as usize][j as usize] = laby.chars().nth(count).expect("IDK");
+            print!("{}", arrayLab[i as usize][j as usize]);
             count = count + 1;
-            if arrayLab[i as usize][j as usize] == 'I'{
+            if arrayLab[i as usize][j as usize] == 'I' {
                 startLab_x = i;
-                startLab_y  = j;
+                startLab_y = j;
             }
             if arrayLab[i as usize][j as usize] == 'X' {
                 endLab_x = i;
@@ -899,17 +956,20 @@ fn main() {
             }
         }
     }
-    println!("value : {}", arrayLab[1][0]);
-    let mut node = Node {
-        cost: startLab_x + startLab_y + endLab_x + endLab_y,
-        dead_end: false,
-        children: [None, None, None, None],
-        x:startLab_x,
-        y:startLab_y
+    println!("arraylab[1][1] = {}",arrayLab[1][1] );
+    println!("endLab_x : {} , endLab_y : {} , arrayLab[end][end] = {}",endLab_x,endLab_y, arrayLab[endLab_x as usize][endLab_y as usize]);
+    let labyData = LabyData {
+        startLab_x,
+        startLab_y,
+        endLab_x,
+        endLab_y
     };
+    println!("value : {}", arrayLab[1][0]);
+    let costFirstNode = labyData.startLab_x + labyData.startLab_y + labyData.endLab_x + labyData.endLab_y;
+    let mut node = Some(Box::new(Node::new(costFirstNode,labyData.startLab_x,labyData.startLab_y,false)));
     let mut response = "".to_string();
-    response = doYouKnowDaWay(node, response, arrayLab, startLab_x, startLab_y, endLab_x, endLab_y).to_string();
-
+    response = doYouKnowDaWay(&mut node, &mut response, arrayLab, labyData).to_string();
+    println!("response : {}", response);
 
 
 
