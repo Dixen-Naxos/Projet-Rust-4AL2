@@ -3,6 +3,7 @@ use std::str;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::ptr::null;
+use std::str::Lines;
 use std::time::Instant;
 use byteorder::{ByteOrder, BigEndian};
 use hex::FromHexError;
@@ -22,6 +23,33 @@ struct ChallengeResult {
 struct ChallengeResultValue {
     answer : MD5HashCash,
     next_target : String
+}
+
+#[derive(Serialize, Deserialize)]
+struct MonstrousMazeInput {
+    grid : String,
+    endurance : u8
+}
+
+#[derive(Serialize, Deserialize)]
+struct MonstrousMazeChallengeResult {
+    ChallengeResult : MonstrousMazeAnswer
+}
+
+#[derive(Serialize, Deserialize)]
+struct MonstrousMazeAnswer {
+    answer : MonstrousMaze,
+    next_target : String
+}
+
+#[derive(Serialize, Deserialize)]
+struct MonstrousMazeValue {
+    path : String
+}
+
+#[derive(Serialize, Deserialize)]
+struct MonstrousMaze {
+    MonstrousMaze : MonstrousMazeValue
 }
 
 #[derive(Serialize, Deserialize)]
@@ -86,6 +114,57 @@ pub struct Md5HashCashInput {
     pub complexity : i32,
     pub message : String
 }
+struct Node {
+    cost : isize,
+    dead_end: bool,
+    east : Option<Box<Node>>,
+    west : Option<Box<Node>>,
+    north : Option<Box<Node>>,
+    south : Option<Box<Node>>,
+    x : isize,
+    y : isize,
+}
+
+struct LabyData {
+    startLab_x : isize,
+    startLab_y : isize,
+    endLab_x : isize,
+    endLab_y : isize
+}
+
+impl Node {
+    pub fn new(cost: isize, x : isize, y : isize, deadEnd : bool) -> Self {
+        Node {
+            cost,
+            dead_end : deadEnd,
+            east: None,
+            west: None,
+            north : None,
+            south : None,
+            x,
+            y
+        }
+    }
+    pub fn east(&mut self, node: Node){
+        self.east = Some(Box::new(node));
+    }
+
+    pub fn west(&mut self, node: Node){
+        self.west = Some(Box::new(node));
+    }
+
+    pub fn north(&mut self, node: Node){
+        self.north = Some(Box::new(node));
+    }
+
+    pub fn south(&mut self, node: Node){
+        self.south = Some(Box::new(node));
+    }
+    pub fn deadEnd(&mut self, deadEnd : bool){
+        self.dead_end = deadEnd;
+    }
+    pub fn cmp( a1: &Option<Box<Node>>, a2: &Option<Box<Node>> ) -> bool { a1 as *const _ == a2 as *const _ }
+}
 
 trait Challenge {
 
@@ -107,6 +186,10 @@ struct Nonogram {
 
 struct Md5 {
     input : Md5HashCashInput
+}
+
+struct MonstrousMazeStruct {
+    input : MonstrousMazeInput
 }
 
 impl Nonogram {
@@ -498,6 +581,132 @@ impl Challenge for Md5 {
     }
 }
 
+impl Challenge for MonstrousMazeStruct {
+    type Input = MonstrousMazeInput;
+    type Output = MonstrousMazeValue;
+
+    fn name() -> String {
+        "MonstrousMaze".to_string()
+    }
+
+    fn new(input: Self::Input) -> Self {
+        MonstrousMazeStruct {
+            input
+        }
+    }
+
+    fn solve(&self) -> Self::Output {
+        let mut laby : String = (&self.input.grid).to_string().to_string();
+        laby = laby[1..laby.len()-1].to_string();
+        let mut row = 0;
+        let mut col = 0;
+        let mut rows = 0;
+        let mut cols = 0;
+        let mut count = 0;
+        println!("lab : {laby}");
+        let split : Lines = laby.lines();
+        println!("cols : {}", split.clone().nth(0).expect("Not found"));
+        //println!("cols : {}", split.clone().nth(1).expect("Not found"));
+        let cols: isize = split.clone().nth(0).expect("Not found").len() as isize;
+        println!("cols : {}", cols);
+        let rows: isize = split.clone().count() as isize;
+        println!("rows : {}", rows);
+        //let mut arrayLab = vec![[0 as u8 ; cols]; rows as usize];
+        /*for mut i in 0..laby.len() {
+            print!(" {} ",laby.clone().chars().nth(i).expect("IDK"));
+            if laby.clone().chars().nth(i).expect("IDK") == '\\' {
+                rows = rows + 1;
+                cols = 0;
+            }
+            cols = cols + 1;
+        }*/
+        print!("\n");
+        println!("cols : {cols} rows : {rows}");
+        let mut arrayLab_raw = vec!['0'; (cols * rows) as usize];
+
+        // Vector of 'width' elements slices
+        let mut arrayLab_base: Vec<_> = arrayLab_raw.as_mut_slice().chunks_mut(cols as usize).collect();
+
+        // Final 2d array `&mut [&mut [_]]`
+        let arrayLab = arrayLab_base.as_mut_slice();
+        let mut startLab_x: isize = 0;
+        let mut startLab_y: isize= 0;
+        let mut endLab_x: isize = 0;
+        let mut endLab_y: isize = 0;
+        for i in 0..rows {
+            for j in 0..cols {
+                if laby.chars().nth(count).expect("IDK") == '\n' {
+                    count = count + 1;
+                }
+                arrayLab[i as usize][j as usize] = laby.chars().nth(count).expect("IDK");
+                //print!("{}", arrayLab[i as usize][j as usize]);
+                count = count + 1;
+                if arrayLab[i as usize][j as usize] == 'I' {
+                    startLab_x = i;
+                    startLab_y = j;
+                }
+                if arrayLab[i as usize][j as usize] == 'X' {
+                    endLab_x = i;
+                    endLab_y = j;
+                }
+            }
+        }
+        /*for mut i in 0..laby.len() {
+            if laby.clone().chars().nth(i).expect("IDK") == '\\' {
+                i = i + 3;
+                if(row < rows-1) {
+                    row = row + 1;
+                }
+                col = 0;
+            }
+            arrayLab[row][col] = laby.clone().chars().nth(i).expect("IDK");
+            if arrayLab[row][col] == 'I' {
+                startLab_x = row as isize;
+                startLab_y = col as isize;
+            }
+            if arrayLab[row][col] == 'X' {
+                endLab_x = row as isize;
+                endLab_y = col as isize;
+            }
+            col = col + 1;
+        }*/
+        for i in 0..rows {
+            for j in 0..cols {
+                print!("{}", arrayLab[i as usize][j as usize]);
+            }
+            print!("\n");
+        }
+        println!("arraylab[1][1] = {}",arrayLab[1][1] );
+        println!("endLab_x : {} , endLab_y : {} , arrayLab[end][end] = {}",endLab_x,endLab_y, arrayLab[endLab_x as usize][endLab_y as usize]);
+        let labyData = LabyData {
+            startLab_x,
+            startLab_y,
+            endLab_x,
+            endLab_y
+        };
+        println!("value : {}", arrayLab[1][0]);
+        let costFirstNode = labyData.startLab_x + labyData.startLab_y + labyData.endLab_x + labyData.endLab_y;
+        let mut node = Some(Box::new(Node::new(costFirstNode,labyData.startLab_x,labyData.startLab_y,false)));
+        let mut response = "".to_string();
+        let res = doYouKnowDaWay(&mut node, response, arrayLab, &labyData,0,0).to_string();
+        for i in 0..33 {
+            for j in 0..33 {
+                print!("{}", arrayLab[i as usize][j as usize]);
+            }
+            print!("\n");
+        }
+        println!("response : {}", res);
+        let MonstrousMazeValue : MonstrousMazeValue = MonstrousMazeValue {
+            path : res
+        };
+        return MonstrousMazeValue;
+    }
+
+    fn verify(&self, answer: &Self::Output) -> bool {
+        todo!()
+    }
+}
+
 impl Challenge for Nonogram {
 
     type Input = NonogramSolverInput;
@@ -570,9 +779,9 @@ fn main() {
     while true {
 
         // .\server.exe --debug -g nonogram-solver
-        nonogram_solver(stream.try_clone().expect("Error cloning stream"));
+        //nonogram_solver(stream.try_clone().expect("Error cloning stream"));
         //MD5_solver(stream.try_clone().expect("Error cloning stream"));
-
+        MonstrousMazeSolver(stream.try_clone().expect("Error cloning stream"));
         //MD5(stream.try_clone().expect("Error cloning stream"));
     }
 
@@ -611,6 +820,37 @@ fn nonogram_solver(mut stream: TcpStream) {
     }
 }
 
+fn MonstrousMazeSolver(mut stream : TcpStream){
+    let str = read(stream.try_clone().expect("Error cloning stream"));
+    //println!("message : {}", str);
+    if str["Challenge"].to_string() != "null" {
+        let _data : MonstrousMazeInput = MonstrousMazeInput {
+            grid : str["Challenge"]["MonstrousMaze"]["grid"].to_string(),
+            endurance : str["Challenge"]["MonstrousMaze"]["endurance"].to_string().parse::<u8>().unwrap()
+        };
+
+        let _MonstrousMaze = MonstrousMazeStruct::new(_data);
+
+        let MonstrousMaze : MonstrousMaze = MonstrousMaze {
+            MonstrousMaze: _MonstrousMaze.solve()
+        };
+
+        let MonstrousMazeAnswer : MonstrousMazeAnswer = MonstrousMazeAnswer {
+            answer : MonstrousMaze,
+            next_target : "free_potato".to_string()
+        };
+
+        let MonstrousMazeChallengeResult : MonstrousMazeChallengeResult = MonstrousMazeChallengeResult {
+            ChallengeResult: MonstrousMazeAnswer
+        };
+
+        let mut json : String = serde_json::to_string(&MonstrousMazeChallengeResult).unwrap();
+        let cloned_stream = stream.try_clone().expect("Error cloning stream");
+        let str = json;
+        send(cloned_stream, &*str);
+    }
+}
+
 fn MD5_solver(mut stream: TcpStream) {
 
     let str = read(stream.try_clone().expect("Error cloning stream"));
@@ -646,6 +886,185 @@ fn MD5_solver(mut stream: TcpStream) {
         let cloned_stream = stream.try_clone().expect("Error cloning stream");
         let str = json;
         send(cloned_stream, &*str);
+    }
+}
+
+fn calculChildrenCost(arrayLab : &mut[&mut[char]], node: &mut Node, endLab_x : isize, endLab_y : isize ){
+    let mut cost = 0;
+    if node.x != 0 {
+        cost = abs(node.x - 1 - endLab_x) + abs(node.y - endLab_y);
+        let mut node2 = Node::new(cost,node.x-1, node.y, arrayLab[(node.x - 1) as usize][node.y as usize] == '#');
+        node.north(node2);
+
+        println!("north : {}", arrayLab[(node.x - 1) as usize][node.y as usize] == '#');
+    }
+
+    if node.x != (arrayLab.len() - 1) as isize {
+        cost = abs(node.x + 1 - endLab_x) + abs(node.y - endLab_y);
+        node.south(Node::new(cost, node.x + 1, node.y, arrayLab[(node.x + 1) as usize][node.y as usize] == '#'));
+        //println!("south value : {}, x : {}, y : {}", arrayLab[(node.x + 1) as usize][node.y as usize], node.x + 1, node.y);
+        println!("south : {}", arrayLab[(node.x + 1) as usize][node.y as usize] == '#');
+    }
+
+    if node.y != 0 {
+        cost = abs(node.x - endLab_x) + abs(node.y - 1 - endLab_y);
+        node.west(Node::new(cost, node.x, node.y - 1, arrayLab[node.x as usize][(node.y - 1) as usize] == '#'));
+        println!("west : {}", arrayLab[node.x as usize][(node.y - 1) as usize] == '#');
+    }
+
+    if node.y != (arrayLab[0].len() -1 ) as isize {
+        cost = abs(node.x - endLab_x) + abs(node.y + 1 - endLab_y);
+        node.east(Node::new(cost, node.x, node.y + 1, arrayLab[node.x as usize][(node.y + 1) as usize] == '#'));
+        println!("east : {}", arrayLab[node.x as usize][(node.y + 1) as usize] == '#');
+    }
+}
+fn min(node : &mut Box<Node>) -> Vec<i32> {
+    let mut vec = Vec::new();
+    let mut vec2 = Vec::new();
+    for i in 0..4{
+        vec.push(0);
+    }
+    for i in 0..4 {
+        if vec[0] == 0 && node.north.is_some() && !node.north.as_ref().unwrap().dead_end
+            && ( vec[3] == 1 || node.west.is_none() || node.west.as_ref().unwrap().dead_end || node.north.as_ref().unwrap().cost <= node.west.as_ref().unwrap().cost)
+            && ( vec[2] == 1 || node.east.is_none() || node.east.as_ref().unwrap().dead_end || node.north.as_ref().unwrap().cost <= node.east.as_ref().unwrap().cost)
+            && ( vec[1] == 1 || node.south.is_none() || node.south.as_ref().unwrap().dead_end || node.north.as_ref().unwrap().cost <= node.south.as_ref().unwrap().cost){
+            vec2.push(0);
+            vec[0] = 1;
+        }
+        if vec[1] == 0 && node.south.is_some() && !node.south.as_ref().unwrap().dead_end
+            && ( vec[3] == 1 || node.west.is_none() || node.west.as_ref().unwrap().dead_end || node.south.as_ref().unwrap().cost <= node.west.as_ref().unwrap().cost)
+            && ( vec[2] == 1 || node.east.is_none() || node.east.as_ref().unwrap().dead_end || node.south.as_ref().unwrap().cost <= node.east.as_ref().unwrap().cost)
+            && ( vec[0] == 1 || node.north.is_none() || node.north.as_ref().unwrap().dead_end || node.south.as_ref().unwrap().cost <= node.north.as_ref().unwrap().cost){
+            vec2.push(1);
+            vec[1] = 1;
+        }
+        if vec[2] == 0 && node.east.is_some() && !node.east.as_ref().unwrap().dead_end
+            && ( vec[3] == 1 || node.west.is_none() || node.west.as_ref().unwrap().dead_end || node.east.as_ref().unwrap().cost <= node.west.as_ref().unwrap().cost)
+            && ( vec[0] == 1 || node.north.is_none() || node.north.as_ref().unwrap().dead_end || node.east.as_ref().unwrap().cost <= node.north.as_ref().unwrap().cost)
+            && ( vec[1] == 1 || node.south.is_none() || node.south.as_ref().unwrap().dead_end || node.east.as_ref().unwrap().cost <= node.south.as_ref().unwrap().cost){
+            vec2.push(2);
+            vec[2] = 1;
+        }
+        if vec[3] == 0 && node.west.is_some() && !node.west.as_ref().unwrap().dead_end
+            && ( vec[1] == 1 || node.south.is_none() || node.south.as_ref().unwrap().dead_end || node.west.as_ref().unwrap().cost <= node.south.as_ref().unwrap().cost)
+            && ( vec[2] == 1 || node.east.is_none() || node.east.as_ref().unwrap().dead_end || node.west.as_ref().unwrap().cost <= node.east.as_ref().unwrap().cost)
+            && ( vec[0] == 1 || node.north.is_none() || node.north.as_ref().unwrap().dead_end || node.west.as_ref().unwrap().cost <= node.north.as_ref().unwrap().cost){
+            vec2.push(3);
+            vec[3] = 1;
+        }
+    }
+
+    return vec2;
+}
+
+fn doYouKnowDaWay(node: &mut Option<Box<Node>>, mut response: String, arrayLab : &mut[&mut[char]], labyData : &LabyData, parentNode_x: isize, parentNode_y : isize) -> String {
+    match node {
+        Some(ref mut n) => {
+            calculChildrenCost(arrayLab, n, labyData.endLab_x, labyData.endLab_y);
+
+            if n.east.is_some() && n.east.as_ref().unwrap().dead_end == false {
+                println!("cost east : {}", n.east.as_ref().unwrap().cost)
+            }
+            if n.west.is_some() && n.west.as_ref().unwrap().dead_end == false {
+                println!("cost west : {}", n.west.as_ref().unwrap().cost)
+            }
+            if n.north.is_some() && n.north.as_ref().unwrap().dead_end == false {
+                println!("cost north : {}", n.north.as_ref().unwrap().cost)
+            }
+            if n.south.is_some() && n.south.as_ref().unwrap().dead_end == false {
+                println!("cost south : {}", n.south.as_ref().unwrap().cost)
+            }
+            let mut node_min = min(n);
+            //println!("cost min : {}", node_min[0]);
+            for i in 0..node_min.len() {
+                println!("node_min[{i}] : {}",node_min[i])
+            }
+            println!("x : {}, y : {}",n.x, n.y);
+            //println!("SALUTR");
+            println!("n.x : {} n.y : {} lab : {}", n.x, n.y, arrayLab[31][32]);
+            if(arrayLab[n.x as usize][n.y as usize] == 'X'){
+                println!("SALUTR");
+                return response
+            }
+            /*for i in 0..33 {
+                for j in 0..33 {
+                    print!("{}", arrayLab[i as usize][j as usize]);
+                }
+                print!("\n");
+            }*/
+            let mut res = String::new();
+            for i in 0..node_min.len() {
+                match node_min[i] {
+                    0 => {
+                        if node_min.len() == 1 && parentNode_x == n.north.as_ref().unwrap().x && parentNode_y == n.north.as_ref().unwrap().y{
+                            //println!("WESH LA ZONE");
+                            //n.deadEnd(true);
+                            //arrayLab[n.x as usize][n.y as usize] = '#';
+                            response.push('D');
+                            println!("reponse : {response}");
+                            return response;
+                        }else if parentNode_x != n.north.as_ref().unwrap().x || parentNode_y != n.north.as_ref().unwrap().y{
+                            response.push('^');
+                            res = doYouKnowDaWay(&mut n.north, response.clone(), arrayLab, labyData, n.x, n.y);
+                        }
+                    },
+                    1 => {
+                        if node_min.len() == 1 && parentNode_x == n.south.as_ref().unwrap().x && parentNode_y == n.south.as_ref().unwrap().y {
+                            //n.deadEnd(true);
+                            arrayLab[n.x as usize][n.y as usize] = '#';
+                            response.push('D');
+                            return response;
+                        }else if parentNode_x != n.south.as_ref().unwrap().x || parentNode_y != n.south.as_ref().unwrap().y{
+                            response.push('v');
+                            res = doYouKnowDaWay(&mut n.south, response.clone(), arrayLab, labyData, n.x, n.y);
+                        }
+                    },
+                    2 => {
+                        if node_min.len() == 1 && parentNode_x == n.east.as_ref().unwrap().x && parentNode_y == n.east.as_ref().unwrap().y {
+                            //n.deadEnd(true);
+                            arrayLab[n.x as usize][n.y as usize] = '#';
+                            response.push('D');
+                            return response;
+                        }else if parentNode_x != n.east.as_ref().unwrap().x || parentNode_y != n.east.as_ref().unwrap().y{
+                            response.push('>');
+                            res = doYouKnowDaWay(&mut n.east, response.clone(), arrayLab, labyData, n.x, n.y);
+                        }
+                    },
+                    3 => {
+                        if node_min.len() == 1 && parentNode_x == n.west.as_ref().unwrap().x && parentNode_y == n.west.as_ref().unwrap().y {
+                            //n.deadEnd(true);
+                            arrayLab[n.x as usize][n.y as usize] = '#';
+                            response.push('D');
+                            return response;
+                        }else if parentNode_x != n.west.as_ref().unwrap().x || parentNode_y != n.west.as_ref().unwrap().y{
+                            response.push('<');
+                            res = doYouKnowDaWay(&mut n.west, response.clone(), arrayLab, labyData, n.x, n.y);
+                        }
+                    },
+                    _ => {
+
+                    }
+                }
+                //println!("reponse : {res} x : {} y : {}",n.x,n.y);
+                if res.len() > 0 && res.as_bytes()[res.len() - 1] != 68 {
+                    return res;
+                }
+            }
+            if res.as_bytes()[res.len() - 1] == 68 {
+                return res;
+            }
+        },
+        None=> println!("Has no value")
+    }
+    return response.clone();
+}
+
+fn abs(nb : isize) -> isize {
+    if nb > 0 {
+        return nb;
+    }else {
+        return -nb;
     }
 }
 
