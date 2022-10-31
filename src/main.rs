@@ -606,7 +606,7 @@ impl RecoverSecret {
         return s_return;
     }
 }
-
+/*
 impl Challenge for Md5 {
     type Input = Md5HashCashInput;
     type Output = MD5HashCashValue;
@@ -686,7 +686,7 @@ impl Challenge for Md5 {
         todo!()
     }
 }
-
+*/
 impl Challenge for Nonogram {
 
     type Input = NonogramSolverInput;
