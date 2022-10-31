@@ -608,7 +608,7 @@ impl RecoverSecret {
                         s_swap[cnt as usize] = char_swap;
                         s_return = String::from_utf8(s_swap).unwrap();
                         ended = true;
-                        break;
+                        array[j] = cnt;
                     }
                     cnt = array[j];
                 }
