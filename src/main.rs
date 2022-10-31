@@ -1,9 +1,3 @@
-<<<<<<< Updated upstream
-use std::env;
-use std::str;
-use std::io::{Read, Write};
-use std::net::{Shutdown, TcpStream};
-=======
 use std::{default, env};
 use std::fmt::format;
 use std::str;
@@ -12,10 +6,11 @@ use std::net::{Shutdown, TcpStream};
 use std::ops::Index;
 use std::ptr::null;
 use std::time::Instant;
->>>>>>> Stashed changes
 use byteorder::{ByteOrder, BigEndian};
 use serde_json::{json, Value};
 use serde::{Deserialize, Serialize};
+use std::sync::mpsc;
+use std::thread;
 
 #[derive(Serialize, Deserialize)]
 struct Response {
@@ -37,8 +32,6 @@ enum SubscribeError {
     InvalidName
 }
 
-<<<<<<< Updated upstream
-=======
 #[derive(Serialize)]
 struct NonogramResult {
     ChallengeResult : NonogramResultValue
@@ -761,7 +754,6 @@ impl Challenge for RecoverSecret {
     }
 }
 
->>>>>>> Stashed changes
 fn main() {
     let mut args: Vec<String> = env::args().collect();
 
@@ -785,8 +777,7 @@ fn main() {
     let cloned_stream = stream.try_clone().expect("Error cloning stream");
     let str = r#"{"Subscribe":{"name":"free_patato"}}"#;
     send(cloned_stream, str);
-<<<<<<< Updated upstream
-=======
+
     let subscribeResult : Value = read(stream.try_clone().expect("Error cloning stream"));
     let res = subscribeResult["SubscribeResult"]["Err"].to_string();
     if res != "null" {
@@ -807,13 +798,10 @@ fn main() {
 
         //MD5(stream.try_clone().expect("Error cloning stream"));
     }
->>>>>>> Stashed changes
 
     stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
 }
 
-<<<<<<< Updated upstream
-=======
 fn recover_secret_solver(mut stream: TcpStream) {
     let str = read(stream.try_clone().expect("Error cloning stream"));
 
@@ -948,7 +936,6 @@ fn to_binary(c: char) -> &'static str {
         _ => "",
     }
 }
->>>>>>> Stashed changes
 
 fn send(mut stream: TcpStream, str: &str) {
 
