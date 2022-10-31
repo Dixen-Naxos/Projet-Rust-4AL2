@@ -1,16 +1,39 @@
 use std::{default, env};
-use std::fmt::format;
 use std::str;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpStream};
-use std::ops::Index;
 use std::ptr::null;
 use std::time::Instant;
 use byteorder::{ByteOrder, BigEndian};
+use hex::FromHexError;
 use serde_json::{json, Value};
 use serde::{Deserialize, Serialize};
+use hexutil;
 use std::sync::mpsc;
 use std::thread;
+
+
+#[derive(Serialize, Deserialize)]
+struct ChallengeResult {
+    ChallengeResult : ChallengeResultValue
+}
+
+#[derive(Serialize, Deserialize)]
+struct ChallengeResultValue {
+    answer : MD5HashCash,
+    next_target : String
+}
+
+#[derive(Serialize, Deserialize)]
+struct MD5HashCash {
+    MD5HashCash : MD5HashCashValue
+}
+
+#[derive(Serialize, Deserialize)]
+struct MD5HashCashValue {
+    seed : u64,
+    hashcode : String
+}
 
 #[derive(Serialize, Deserialize)]
 struct Response {
@@ -606,7 +629,7 @@ impl RecoverSecret {
         return s_return;
     }
 }
-/*
+
 impl Challenge for Md5 {
     type Input = Md5HashCashInput;
     type Output = MD5HashCashValue;
@@ -686,7 +709,7 @@ impl Challenge for Md5 {
         todo!()
     }
 }
-*/
+
 impl Challenge for Nonogram {
 
     type Input = NonogramSolverInput;
@@ -755,6 +778,8 @@ impl Challenge for RecoverSecret {
 }
 
 fn main() {
+
+
     let mut args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
@@ -772,12 +797,13 @@ fn main() {
     let cloned_stream = stream.try_clone().expect("Error cloning stream");
     let str = r#""Hello""#;
     send(cloned_stream, str);
+    let welcome : Value = read(stream.try_clone().expect("Error cloning stream"));
+    println!("version : {}",welcome["Welcome"]["version"]);
 
     println!("2 :");
     let cloned_stream = stream.try_clone().expect("Error cloning stream");
     let str = r#"{"Subscribe":{"name":"free_patato"}}"#;
     send(cloned_stream, str);
-
     let subscribeResult : Value = read(stream.try_clone().expect("Error cloning stream"));
     let res = subscribeResult["SubscribeResult"]["Err"].to_string();
     if res != "null" {
@@ -789,7 +815,7 @@ fn main() {
     while true {
 
         // .\server.exe --debug -g nonogram-solver
-        // nonogram_solver(stream.try_clone().expect("Error cloning stream"));
+        //nonogram_solver(stream.try_clone().expect("Error cloning stream"));
 
         // .\server.exe --debug -g recover-secret
         recover_secret_solver(stream.try_clone().expect("Error cloning stream"));
@@ -937,7 +963,7 @@ fn to_binary(c: char) -> &'static str {
     }
 }
 
-fn send(mut stream: TcpStream, str: &str) {
+fn send(mut stream: TcpStream, str: &str){
 
     let str = str.as_bytes();
 
@@ -952,14 +978,26 @@ fn send(mut stream: TcpStream, str: &str) {
 
     stream.write(&buf).expect("Error Sending Message");
 
-    let mut nb = [0;4];
-    stream.read(&mut nb).expect("Error Reading");
-    let nb = BigEndian::read_u32(&nb);
 
-    let mut str = vec![0; nb as usize];
-    stream.read(&mut str).expect("Error Reading");
-    let str = str::from_utf8(&str).unwrap();
-    let str: Value = serde_json::from_str(str).expect("Error parsing json");
-
-    println!("version : {}", str["Welcome"]);
 }
+
+fn read (mut stream: TcpStream) -> Value {
+    let str : Value = Default::default();
+    while true {
+        let mut nb = [0;4];
+        stream.read(&mut nb).expect("Error Reading");
+        let nb = BigEndian::read_u32(&nb);
+
+        if nb > 0 {
+            let mut str = vec![0; nb as usize];
+            stream.read(&mut str).expect("Error Reading");
+            let str = str::from_utf8(&str).unwrap();
+            let str: Value = serde_json::from_str(str).expect("Error parsing json");
+            return str;
+        }
+
+    }
+
+    str
+}
+
