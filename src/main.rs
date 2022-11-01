@@ -573,48 +573,36 @@ impl RecoverSecret {
         let mut s_return = self.create_string_with_all_letters();
         let mut s_swap;
         let mut ended;
-        let mut nb = 0;
         let mut letters_index = 0;
         let mut cnt: usize;
-        let mut array: Vec<usize>;
         let mut char_swap;
 
         while true {
-            nb = 0;
             letters_index = 0;
             ended = false;
 
             for i in 0..self.input.tuple_sizes.len() {
                 cnt = 0;
-                array = Vec::new();
-
-                for _ in 0..self.input.tuple_sizes[i] {
-                    array.push(0);
-                }
 
                 for j in 0..self.input.tuple_sizes[i] {
                     for k in 0..s_return.len() {
                         if self.input.letters.as_bytes()[letters_index + j] == s_return.as_bytes()[k] {
-                            array[j] = k;
+                            if cnt > k {
+                                s_swap = s_return.into_bytes();
+                                char_swap = s_swap[k];
+                                s_swap[k] = s_swap[cnt];
+                                s_swap[cnt] = char_swap;
+                                s_return = String::from_utf8(s_swap).unwrap();
+                                ended = true;
+                            } else {
+                                cnt = k;
+                            }
+                            break;
                         }
                     }
                 }
 
-                for j in 0..self.input.tuple_sizes[i] {
-                    if cnt > array[j] {
-                        s_swap = s_return.into_bytes();
-                        char_swap = s_swap[array[j]];
-                        s_swap[array[j]] = s_swap[cnt as usize];
-                        s_swap[cnt as usize] = char_swap;
-                        s_return = String::from_utf8(s_swap).unwrap();
-                        ended = true;
-                        array[j] = cnt;
-                    }
-                    cnt = array[j];
-                }
-
                 letters_index += self.input.tuple_sizes[i];
-                nb += 1;
             }
 
             if ended == false {
