@@ -579,7 +579,7 @@ impl RecoverSecret {
 
         while true {
             letters_index = 0;
-            ended = false;
+            ended = true;
 
             for i in 0..self.input.tuple_sizes.len() {
                 cnt = 0;
@@ -593,7 +593,7 @@ impl RecoverSecret {
                                 s_swap[k] = s_swap[cnt];
                                 s_swap[cnt] = char_swap;
                                 s_return = String::from_utf8(s_swap).unwrap();
-                                ended = true;
+                                ended = false;
                             } else {
                                 cnt = k;
                             }
@@ -605,7 +605,7 @@ impl RecoverSecret {
                 letters_index += self.input.tuple_sizes[i];
             }
 
-            if ended == false {
+            if ended {
                 break;
             }
         }
