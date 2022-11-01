@@ -582,6 +582,7 @@ impl RecoverSecret {
         while true {
             nb = 0;
             letters_index = 0;
+            ended = false;
 
             for i in 0..self.input.tuple_sizes.len() {
                 cnt = 0;
@@ -599,7 +600,6 @@ impl RecoverSecret {
                     }
                 }
 
-                ended = false;
                 for j in 0..self.input.tuple_sizes[i] {
                     if cnt > array[j] {
                         s_swap = s_return.into_bytes();
@@ -613,15 +613,11 @@ impl RecoverSecret {
                     cnt = array[j];
                 }
 
-                if ended {
-                    break;
-                }
-
                 letters_index += self.input.tuple_sizes[i];
                 nb += 1;
             }
 
-            if nb == self.input.tuple_sizes.len() {
+            if ended == false {
                 break;
             }
         }
