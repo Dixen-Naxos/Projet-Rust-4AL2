@@ -1,5 +1,5 @@
 on:
-  pull_request:
+  push:
     branches: [ "Implement-releasing" ]
 
 env:
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout master Branch
         uses: actions/checkout@v2
         with:
-          ref: 'master'
+          ref: 'Implement-releasing'
       - name: Build
         run: cargo build --verbose
       - name: Create Release
