@@ -25,10 +25,8 @@ jobs:
         uses: actions/create-release@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: tag-${{ env.date }}
-          RELEASE_NAME: release-${{ env.date }}
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: ${{ env.RELEASE_NAME }}
+          tag_name: tag-${{ env.date }}
+          release_name: release-${{ env.date }}
           draft: false
           prerelease: false
