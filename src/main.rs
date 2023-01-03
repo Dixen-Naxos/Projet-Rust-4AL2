@@ -568,6 +568,30 @@ impl RecoverSecret {
         return s_return;
     }
 
+    fn create_string_with_all_letters_double(&self) -> String {
+
+        let mut s_return = String::from("");
+        let mut found: bool;
+
+        for i in 0..self.input.letters.len() {
+            found = false;
+            for j in 0..s_return.len() {
+                if s_return.as_bytes()[j] == self.input.letters.as_bytes()[i] {
+                    found = true;
+                    break;
+                }
+            }
+
+            if found {
+                continue;
+            }
+
+            s_return.push(self.input.letters.as_bytes()[i] as char);
+        }
+
+        return s_return;
+    }
+
     fn switch(&self) -> String {
 
         let mut s_return = self.create_string_with_all_letters();
@@ -974,9 +998,13 @@ fn read (mut stream: TcpStream) -> Value {
 
         if nb > 0 {
             let mut str = vec![0; nb as usize];
-            stream.read(&mut str).expect("Error Reading");
-            let str = str::from_utf8(&str).unwrap();
-            let str: Value = serde_json::from_str(str).expect("Error parsing json");
+            stream.read_exact(&mut str).expect("Error Reading");
+            let str2 = str::from_utf8(&str).unwrap();
+
+            let str: Value = match serde_json::from_str(str2) {
+                Ok(num) => num,
+                Err(_) => continue,
+            };
             return str;
         }
 
