@@ -23,33 +23,13 @@ fn main() {
 
     loop {
         let message : MessageInputType = read(stream.try_clone().expect("Error cloning stream"));
-        match message {
-            MessageInputType::Welcome(welcome) => {
-                println!("version : {}", welcome.version);
-
+        let message_out = message.match_type();
+        match message_out {
+            Some(message) => {
                 let cloned_stream = stream.try_clone().expect("Error cloning stream");
-                let subscribe_message = Subscribe{ name: "TEMA LA PATATE".to_string() };
-                send(cloned_stream, MessageOutputType::Subscribe(subscribe_message));
-            }
-            MessageInputType::Challenge(_) => {}
-            MessageInputType::SubscribeResult(result) => {
-                match result {
-                    SubscribeResult::Ok => {
-                        println!("Successfully registered");
-                    }
-                    SubscribeResult::Err(error) => {
-                        match error {
-                            SubscribeError::AlreadyRegistered => println!("Error during registration : AlreadyRegistered"),
-                            SubscribeError::InvalidName => println!("Error during registration : InvalidName")
-                        }
-                        exit(409);
-                    }
-                }
-            }
-            MessageInputType::ChallengeTimeout(_) => {}
-            MessageInputType::PublicLeaderBoardMessage(_) => {}
-            MessageInputType::EndOfGame(_) => break,
-            MessageInputType::RoundSummary(_) => {}
+                send(cloned_stream, message);
+            },
+            None => {}
         }
     }
 
