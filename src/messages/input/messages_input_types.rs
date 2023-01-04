@@ -9,7 +9,6 @@ use crate::messages::input::message_round_summary::RoundSummary;
 
 #[derive(Deserialize)]
 pub enum MessageInputType {
-    Hello,
     Welcome(Welcome),
     Challenge(Challenge),
     SubscribeResult(SubscribeResult),
