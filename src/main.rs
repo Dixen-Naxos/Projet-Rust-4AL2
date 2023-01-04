@@ -60,14 +60,11 @@ fn read (mut stream: TcpStream) -> MessageInputType {
             let mut str_bytes = vec![0; nb as usize];
             stream.read_exact(&mut str_bytes).expect("Error Reading");
             let str = str::from_utf8(&str_bytes).unwrap();
-            println!("{}", str);
+            println!("Read : {}", str);
 
             let message: MessageInputType = match serde_json::from_str(str) {
-                Ok(num) => num,
-                Err(_) => {
-                    println!("error");
-                    continue;
-                },
+                Ok(message) => message,
+                Err(_) => continue
             };
             return message;
         }
@@ -77,7 +74,9 @@ fn read (mut stream: TcpStream) -> MessageInputType {
 fn send(mut stream: TcpStream, message: MessageOutputType){
 
     let str = &*serde_json::to_string(&message).unwrap();
+    println!("Send : {}", str);
     let str_bytes = str.as_bytes();
+
 
     let nb: u32 = str_bytes.len() as u32;
 

@@ -27,14 +27,12 @@ pub enum MessageInputType {
 impl MessageInputType {
 
     pub fn match_type(&self) -> Option<MessageOutputType> {
-        println!("Match");
         match self {
             MessageInputType::Welcome(welcome) => {
                 println!("version : {}", welcome.version);
                 return Option::from(MessageOutputType::Subscribe(Subscribe{ name: "TEMA LA PATATE".to_string() }));
             }
             MessageInputType::Challenge(challenge) => {
-                println!("chall");
                 match challenge {
                     ChallengeMessage::MD5HashCash(_) => {}
                     ChallengeMessage::RecoverSecret(input) => {
@@ -58,9 +56,7 @@ impl MessageInputType {
                 }
             }
             MessageInputType::SubscribeResult(result) => result.display(),
-            _ => {
-                println!("test");
-            }
+            _ => {}
         }
 
         None
