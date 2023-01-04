@@ -1,17 +1,17 @@
 use serde::Serialize;
-use crate::challenges::challenge_hash_cash::MD5HashCashAnswer;
-use crate::challenges::challenge_nonogram::NonogramAnswer;
-use crate::challenges::challenge_recover_secret::RecoverSecretAnswer;
+use crate::challenges_compute::challenge_hash_cash::MD5HashCashValue;
+use crate::challenges_compute::challenge_nonogram::NonogramSolverOutput;
+use crate::challenges_compute::challenge_recover_secret::RecoverSecretOutput;
 
 #[derive(Serialize)]
 pub struct ChallengeResult {
-    answer: ChallengeAnswer,
-    next_target: String
+    pub answer: ChallengeAnswer,
+    pub next_target: String
 }
 
 #[derive(Serialize)]
-enum ChallengeAnswer {
-    MD5HashCashAnswer(MD5HashCashAnswer),
-    NonogramAnswer(NonogramAnswer),
-    RecoverSecretAnswer(RecoverSecretAnswer)
+pub enum ChallengeAnswer {
+    MD5HashCash(MD5HashCashValue),
+    Nonogram(NonogramSolverOutput),
+    RecoverSecret(RecoverSecretOutput)
 }

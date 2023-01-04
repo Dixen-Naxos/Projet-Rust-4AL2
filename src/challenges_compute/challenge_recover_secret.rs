@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::challenges::challenge::Challenge;
+use crate::challenges_compute::challenge::Challenge;
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -9,20 +9,20 @@ pub struct RecoverSecretAnswer {
 
 #[derive(Serialize)]
 pub struct RecoverSecretOutput {
-    secret_sentence: String,
+    pub secret_sentence: String,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RecoverSecret {
-    recover_secret: RecoverSecretInput
+    pub recover_secret: RecoverSecretInput
 }
 
 #[derive(Deserialize)]
 pub struct RecoverSecretInput {
-    word_count: usize,
-    letters: String,
-    tuple_sizes: Vec<usize>,
+    pub word_count: usize,
+    pub letters: String,
+    pub tuple_sizes: Vec<usize>,
 }
 
 impl RecoverSecret {

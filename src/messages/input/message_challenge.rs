@@ -1,11 +1,11 @@
 use serde::Deserialize;
-use crate::challenges::challenge_hash_cash::Md5;
-use crate::challenges::challenge_nonogram::Nonogram;
-use crate::challenges::challenge_recover_secret::RecoverSecret;
+use crate::challenges_compute::challenge_hash_cash::Md5HashCashInput;
+use crate::challenges_compute::challenge_nonogram::NonogramSolverInput;
+use crate::challenges_compute::challenge_recover_secret::RecoverSecretInput;
 
 #[derive(Deserialize)]
-pub enum Challenge {
-    Md5(Md5),
-    RecoverySecret(RecoverSecret),
-    Nonogram(Nonogram)
+pub enum ChallengeMessage {
+    MD5HashCash(Md5HashCashInput),
+    RecoverSecret(RecoverSecretInput),
+    Nonogram(NonogramSolverInput)
 }

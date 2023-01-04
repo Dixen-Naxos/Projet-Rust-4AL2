@@ -1,7 +1,7 @@
 use std::sync::mpsc;
 use std::thread;
 use serde::{Deserialize, Serialize};
-use crate::challenges::challenge::Challenge;
+use crate::challenges_compute::challenge::Challenge;
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]

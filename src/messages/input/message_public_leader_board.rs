@@ -7,5 +7,5 @@ pub struct PublicPlayer {
     score: u8,
     steps: u8,
     is_active: bool,
-    total_time_used: f32
+    total_used_time: f32
 }

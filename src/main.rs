@@ -1,5 +1,5 @@
 mod messages;
-mod challenges;
+mod challenges_compute;
 
 use crate::messages::output::messages_output_types::MessageOutputType;
 use crate::messages::output::message_subscribe::Subscribe;
@@ -60,10 +60,14 @@ fn read (mut stream: TcpStream) -> MessageInputType {
             let mut str_bytes = vec![0; nb as usize];
             stream.read_exact(&mut str_bytes).expect("Error Reading");
             let str = str::from_utf8(&str_bytes).unwrap();
+            println!("{}", str);
 
             let message: MessageInputType = match serde_json::from_str(str) {
                 Ok(num) => num,
-                Err(_) => continue,
+                Err(_) => {
+                    println!("error");
+                    continue;
+                },
             };
             return message;
         }
