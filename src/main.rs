@@ -2,11 +2,15 @@ mod messages;
 mod challenges;
 
 use crate::messages::output::messages_output_types::MessageOutputType;
+use crate::messages::output::message_subscribe::Subscribe;
+use crate::messages::output::message_challenge_result::ChallengeResult;
 use crate::messages::input::messages_input_types::MessageInputType;
+use crate::messages::input::message_subscribe_result::{SubscribeResult, SubscribeError};
 use std::{default, env};
 use std::str;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpStream};
+use std::process::exit;
 use byteorder::{ByteOrder, BigEndian};
 
 fn main() {
@@ -29,8 +33,32 @@ fn main() {
 
     let welcome : MessageInputType = read(stream.try_clone().expect("Error cloning stream"));
     match welcome {
-        MessageInputType::Welcome(msg) => {
-            println!("version : {}", msg.version);
+        MessageInputType::Welcome(welcome) => {
+            println!("version : {}", welcome.version);
+        }
+        _ => {}
+    }
+
+    let cloned_stream = stream.try_clone().expect("Error cloning stream");
+    let subscribe_message = Subscribe{ name: "TEMA LA PATATE".to_string() };
+    send(cloned_stream, MessageOutputType::Subscribe(subscribe_message));
+
+
+    let subscribe_result: MessageInputType = read(stream.try_clone().expect("Error cloning stream"));
+    match subscribe_result {
+        MessageInputType::SubscribeResult(result) => {
+            match result {
+                SubscribeResult::Ok => {
+                    println!("Successfully registered");
+                }
+                SubscribeResult::Err(error) => {
+                    match error {
+                        SubscribeError::AlreadyRegistered => println!("Error during registration : AlreadyRegistered"),
+                        SubscribeError::InvalidName => println!("Error during registration : InvalidName")
+                    }
+                    exit(409);
+                }
+            }
         }
         _ => {}
     }

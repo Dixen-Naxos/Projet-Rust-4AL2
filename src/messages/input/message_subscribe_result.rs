@@ -7,7 +7,7 @@ pub enum SubscribeResult {
 }
 
 #[derive(Deserialize)]
-enum SubscribeError {
+pub enum SubscribeError {
     AlreadyRegistered,
     InvalidName
 }
