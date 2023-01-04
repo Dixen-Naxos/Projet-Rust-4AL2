@@ -7,15 +7,7 @@ use std::{default, env};
 use std::str;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpStream};
-use std::ptr::null;
-use std::time::Instant;
 use byteorder::{ByteOrder, BigEndian};
-use hex::FromHexError;
-use serde_json::{json, Value};
-use serde::{Deserialize, Serialize};
-use hexutil;
-use std::sync::mpsc;
-use std::thread;
 
 fn main() {
 
