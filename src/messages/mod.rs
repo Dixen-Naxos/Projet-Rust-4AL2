@@ -1,10 +1,2 @@
-mod message_challenge;
-mod message_challenge_result;
-mod message_challenge_timeout;
-mod message_subscribe;
-mod message_end_of_game;
-mod message_public_leader_board;
-mod message_round_summary;
-mod message_subscribe_result;
-mod message_welcome;
-pub mod message_types;
+pub mod output;
+pub mod input;

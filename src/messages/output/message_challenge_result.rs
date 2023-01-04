@@ -1,16 +1,10 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use crate::challenges::challenge_hash_cash::MD5HashCashAnswer;
 use crate::challenges::challenge_nonogram::NonogramAnswer;
 use crate::challenges::challenge_recover_secret::RecoverSecretAnswer;
 
 #[derive(Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct ChallengeResultMessage {
-    challenge_result: ChallengeResult
-}
-
-#[derive(Serialize)]
-struct ChallengeResult {
+pub struct ChallengeResult {
     answer: ChallengeAnswer,
     next_target: String
 }

@@ -1,6 +1,8 @@
 mod messages;
 mod challenges;
 
+use crate::messages::output::messages_output_types::MessageOutputType;
+use crate::messages::input::messages_input_types::MessageInputType;
 use std::{default, env};
 use std::str;
 use std::io::{Read, Write};
@@ -30,54 +32,55 @@ fn main() {
 
     let stream = TcpStream::connect(addr).expect("Connexion failed");
 
-    println!("1 :");
     let cloned_stream = stream.try_clone().expect("Error cloning stream");
-    let str = r#""Hello""#;
-    send(cloned_stream, str);
-    // let welcome : Welcome = serde_json::from_str(&*read(stream.try_clone().expect("Error cloning stream")).to_string()).unwrap();
-    // println!("version : {}", welcome.welcome.version);
+    send(cloned_stream, MessageOutputType::Hello);
+
+    let welcome : MessageInputType = read(stream.try_clone().expect("Error cloning stream"));
+    match welcome {
+        MessageInputType::Welcome(msg) => {
+            println!("version : {}", msg.version);
+        }
+        _ => {}
+    }
+
+    stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
 }
 
-fn read (mut stream: TcpStream) -> Value {
-    let str : Value = Default::default();
-    while true {
-        let mut nb = [0;4];
+fn read (mut stream: TcpStream) -> MessageInputType {
+    loop {
+        let mut nb = [0; 4];
         stream.read(&mut nb).expect("Error Reading");
         let nb = BigEndian::read_u32(&nb);
 
         if nb > 0 {
-            let mut str = vec![0; nb as usize];
-            stream.read_exact(&mut str).expect("Error Reading");
-            let str2 = str::from_utf8(&str).unwrap();
+            let mut str_bytes = vec![0; nb as usize];
+            stream.read_exact(&mut str_bytes).expect("Error Reading");
+            let str = str::from_utf8(&str_bytes).unwrap();
 
-            let str: Value = match serde_json::from_str(str2) {
+            let message: MessageInputType = match serde_json::from_str(str) {
                 Ok(num) => num,
                 Err(_) => continue,
             };
-            return str;
+            return message;
         }
-
     }
-
-    str
 }
 
-fn send(mut stream: TcpStream, str: &str){
+fn send(mut stream: TcpStream, message: MessageOutputType){
 
-    let str = str.as_bytes();
+    let str = &*serde_json::to_string(&message).unwrap();
+    let str_bytes = str.as_bytes();
 
-    let nb: u32 = str.len() as u32;
+    let nb: u32 = str_bytes.len() as u32;
 
     let mut buf= vec![0; 4];
     BigEndian::write_u32(&mut buf, nb);
 
-    for x in str {
+    for x in str_bytes {
         buf.push(*x);
     }
 
     stream.write(&buf).expect("Error Sending Message");
-
-
 }
 
 /*
