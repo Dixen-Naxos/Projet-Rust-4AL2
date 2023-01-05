@@ -6,4 +6,4 @@ mod message_public_leader_board;
 mod message_round_summary;
 pub mod message_subscribe_result;
 mod message_welcome;
-mod challenges;
+pub mod challenges;

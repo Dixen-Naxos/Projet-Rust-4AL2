@@ -1,11 +1,40 @@
 use serde::Deserialize;
-use crate::challenges_compute::challenge_hash_cash::Md5HashCashInput;
-use crate::challenges_compute::challenge_nonogram::NonogramSolverInput;
-use crate::challenges_compute::challenge_recover_secret::RecoverSecretInput;
+use crate::challenges_compute::challenge_hash_cash::Md5;
+use crate::challenges_compute::challenge_nonogram::Nonogram;
+use crate::challenges_compute::challenge_recover_secret::RecoverSecret;
+use crate::{ChallengeResult, MessageOutputType};
+use crate::challenges_compute::challenge::Challenge;
+use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
+use crate::messages::input::challenges::nonogram_input::NonogramSolverInput;
+use crate::messages::input::challenges::recover_secret_input::RecoverSecretInput;
+use crate::messages::output::message_challenge_result::ChallengeAnswer;
 
 #[derive(Deserialize)]
 pub enum ChallengeMessage {
     MD5HashCash(Md5HashCashInput),
     RecoverSecret(RecoverSecretInput),
-    Nonogram(NonogramSolverInput)
+    NonogramSolver(NonogramSolverInput)
+}
+
+impl ChallengeMessage {
+
+    pub fn match_challenge(&self) -> ChallengeAnswer {
+        return match self {
+            ChallengeMessage::MD5HashCash(input) => {
+                let mut md5 = Md5::new((*input).clone());
+                let answer = md5.solve();
+                ChallengeAnswer::MD5HashCash(answer)
+            }
+            ChallengeMessage::RecoverSecret(input) => {
+                let mut recovery_secret = RecoverSecret::new((*input).clone());
+                let answer = recovery_secret.solve();
+                ChallengeAnswer::RecoverSecret(answer)
+            }
+            ChallengeMessage::NonogramSolver(input) => {
+                let mut nonogram = Nonogram::new((*input).clone());
+                let answer = nonogram.solve();
+                ChallengeAnswer::NonogramSolver(answer)
+            }
+        }
+    }
 }

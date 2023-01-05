@@ -1,3 +1,3 @@
-mod hash_cash_answer;
-mod nonogram_answer;
-mod recover_secret_answer;
+pub mod hash_cash_output;
+pub mod nonogram_output;
+pub mod recover_secret_output;

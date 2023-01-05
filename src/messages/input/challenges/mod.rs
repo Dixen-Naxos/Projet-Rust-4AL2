@@ -1,3 +1,3 @@
-mod hash_cash_input;
-mod nonogram_input;
-mod recover_secret_input;
+pub mod hash_cash_input;
+pub mod nonogram_input;
+pub mod recover_secret_input;

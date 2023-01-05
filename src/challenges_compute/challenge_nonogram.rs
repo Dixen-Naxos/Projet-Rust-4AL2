@@ -1,29 +1,11 @@
 use std::sync::mpsc;
 use std::thread;
-use serde::{Deserialize, Serialize};
 use crate::challenges_compute::challenge::Challenge;
+use crate::messages::input::challenges::nonogram_input::NonogramSolverInput;
+use crate::messages::output::challenges::nonogram_output::NonogramSolverOutput;
 
-#[derive(Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct NonogramAnswer {
-    nonogram_solver : NonogramSolverOutput
-}
-
-#[derive(Serialize)]
-pub struct NonogramSolverOutput {
-    grid: String,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct Nonogram {
-    nonogram_solver: NonogramSolverInput
-}
-
-#[derive(Deserialize)]
-pub struct NonogramSolverInput {
-    rows: Vec<Vec<u32>>,
-    cols: Vec<Vec<u32>>,
+    input: NonogramSolverInput
 }
 
 impl Nonogram {
@@ -338,30 +320,30 @@ impl Nonogram {
 impl Challenge for Nonogram {
 
     type Input = NonogramSolverInput;
-    type Output = Vec<Vec<bool>>;
+    type Output = NonogramSolverOutput;
 
     fn name () -> String {
         "Nonogram".to_string()
     }
 
     fn new(input: Self::Input) -> Self {
-
-        Nonogram {
-            nonogram_solver: input
-        }
+        Nonogram {input}
     }
 
     fn solve(&self) -> Self::Output {
 
-        let s_rows = Nonogram::create_solution(&self.nonogram_solver.rows, self.nonogram_solver.cols.len());
+        let s_rows = Nonogram::create_solution(&self.input.rows, self.input.cols.len());
 
         let mut a: Vec<u32> = Vec::new();
 
-        for i in 0..self.nonogram_solver.rows.len() {
+        for i in 0..self.input.rows.len() {
             a.push(0);
         }
 
-        Nonogram::_solve_rows_thearded(a, &s_rows, &self.nonogram_solver.cols, 0)
+        let answer = Nonogram::_solve_rows_thearded(a, &s_rows, &self.input.cols, 0);
+        return NonogramSolverOutput {
+            grid: Nonogram::_vec_to_string(answer)
+        }
     }
 
     fn verify(&self, answer: &Self::Output) -> bool {

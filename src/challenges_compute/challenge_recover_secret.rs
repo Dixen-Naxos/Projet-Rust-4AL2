@@ -1,28 +1,9 @@
-use serde::{Deserialize, Serialize};
 use crate::challenges_compute::challenge::Challenge;
+use crate::messages::input::challenges::recover_secret_input::RecoverSecretInput;
+use crate::messages::output::challenges::recover_secret_output::RecoverSecretOutput;
 
-#[derive(Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct RecoverSecretAnswer {
-    recover_secret : RecoverSecretOutput
-}
-
-#[derive(Serialize)]
-pub struct RecoverSecretOutput {
-    pub secret_sentence: String,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct RecoverSecret {
-    pub recover_secret: RecoverSecretInput
-}
-
-#[derive(Deserialize)]
-pub struct RecoverSecretInput {
-    pub word_count: usize,
-    pub letters: String,
-    pub tuple_sizes: Vec<usize>,
+    pub input: RecoverSecretInput
 }
 
 impl RecoverSecret {
@@ -34,17 +15,17 @@ impl RecoverSecret {
         let mut i_cnt: isize = -1;
         let mut array: Vec<isize> = Vec::new();
 
-        if index == self.recover_secret.tuple_sizes.len() {
+        if index == self.input.tuple_sizes.len() {
             return result;
         }
 
-        for _ in 0..self.recover_secret.tuple_sizes[index] {
+        for _ in 0..self.input.tuple_sizes[index] {
             array.push(-1);
         }
 
-        for i in 0..self.recover_secret.tuple_sizes[index] {
+        for i in 0..self.input.tuple_sizes[index] {
             for j in 0..result.len() {
-                if self.recover_secret.letters.as_bytes()[letters_index + i] == result.as_bytes()[j] {
+                if self.input.letters.as_bytes()[letters_index + i] == result.as_bytes()[j] {
                     array[i] = j as isize;
                 }
             }
@@ -56,10 +37,10 @@ impl RecoverSecret {
             println!("{}", array[i]);
         }
 
-        for i in 0..self.recover_secret.tuple_sizes[index] {
+        for i in 0..self.input.tuple_sizes[index] {
             if cnt >= array[i] && array[i] != -1 {
-                //let mut s_return = String::from(self.recover_secret.letters.as_bytes()[letters_index + i] as char);
-                //s_return.push(self.recover_secret.letters.as_bytes()[letters_index + i_cnt] as char);
+                //let mut s_return = String::from(self.input.letters.as_bytes()[letters_index + i] as char);
+                //s_return.push(self.input.letters.as_bytes()[letters_index + i_cnt] as char);
                 return String::from("");
             }
             if array[i] != -1 {
@@ -75,8 +56,8 @@ impl RecoverSecret {
 
         println!("-------- letters");
 
-        if index_pos == self.recover_secret.tuple_sizes[index] {
-            return self.insert(result, index + 1, letters_index + self.recover_secret.tuple_sizes[index])
+        if index_pos == self.input.tuple_sizes[index] {
+            return self.insert(result, index + 1, letters_index + self.input.tuple_sizes[index])
         }
 
         if pos[index_pos] != -1 {
@@ -102,7 +83,7 @@ impl RecoverSecret {
         for i in min..max {
             let mut pos2 = pos.clone();
             let (p1, p2) = result.split_at(i);
-            result2 = format!("{}{}{}", p1, self.recover_secret.letters.as_bytes()[letters_index + index_pos] as char, p2);
+            result2 = format!("{}{}{}", p1, self.input.letters.as_bytes()[letters_index + index_pos] as char, p2);
             for j in i..pos2.len() {
                 if pos2[j] != -1 {
                     pos2[j] += 1;
@@ -124,10 +105,10 @@ impl RecoverSecret {
         let mut s_return = String::from("");
         let mut found: bool;
 
-        for i in 0..self.recover_secret.letters.len() {
+        for i in 0..self.input.letters.len() {
             found = false;
             for j in 0..s_return.len() {
-                if s_return.as_bytes()[j] == self.recover_secret.letters.as_bytes()[i] {
+                if s_return.as_bytes()[j] == self.input.letters.as_bytes()[i] {
                     found = true;
                     break;
                 }
@@ -137,7 +118,7 @@ impl RecoverSecret {
                 continue;
             }
 
-            s_return.push(self.recover_secret.letters.as_bytes()[i] as char);
+            s_return.push(self.input.letters.as_bytes()[i] as char);
         }
 
         return s_return;
@@ -148,10 +129,10 @@ impl RecoverSecret {
         let mut s_return = String::from("");
         let mut found: bool;
 
-        for i in 0..self.recover_secret.letters.len() {
+        for i in 0..self.input.letters.len() {
             found = false;
             for j in 0..s_return.len() {
-                if s_return.as_bytes()[j] == self.recover_secret.letters.as_bytes()[i] {
+                if s_return.as_bytes()[j] == self.input.letters.as_bytes()[i] {
                     found = true;
                     break;
                 }
@@ -161,7 +142,7 @@ impl RecoverSecret {
                 continue;
             }
 
-            s_return.push(self.recover_secret.letters.as_bytes()[i] as char);
+            s_return.push(self.input.letters.as_bytes()[i] as char);
         }
 
         return s_return;
@@ -180,12 +161,12 @@ impl RecoverSecret {
             letters_index = 0;
             ended = true;
 
-            for i in 0..self.recover_secret.tuple_sizes.len() {
+            for i in 0..self.input.tuple_sizes.len() {
                 cnt = 0;
 
-                for j in 0..self.recover_secret.tuple_sizes[i] {
+                for j in 0..self.input.tuple_sizes[i] {
                     for k in 0..s_return.len() {
-                        if self.recover_secret.letters.as_bytes()[letters_index + j] == s_return.as_bytes()[k] {
+                        if self.input.letters.as_bytes()[letters_index + j] == s_return.as_bytes()[k] {
                             if cnt > k {
                                 s_swap = s_return.into_bytes();
                                 char_swap = s_swap[k];
@@ -201,7 +182,7 @@ impl RecoverSecret {
                     }
                 }
 
-                letters_index += self.recover_secret.tuple_sizes[i];
+                letters_index += self.input.tuple_sizes[i];
             }
 
             if ended {
@@ -216,29 +197,28 @@ impl RecoverSecret {
 impl Challenge for RecoverSecret {
 
     type Input = RecoverSecretInput;
-    type Output = String;
+    type Output = RecoverSecretOutput;
 
     fn name () -> String {
         "Recover Secret".to_string()
     }
 
     fn new(input: Self::Input) -> Self {
-
-        RecoverSecret {
-            recover_secret: input
-        }
+        RecoverSecret {input}
     }
 
     fn solve(&self) -> Self::Output {
 
         /*let mut result = String::new();
 
-        for i in 0..self.recover_secret.tuple_sizes[0] {
-            result.push(self.recover_secret.letters.as_bytes()[i] as char);
+        for i in 0..self.input.tuple_sizes[0] {
+            result.push(self.input.letters.as_bytes()[i] as char);
         }
-        self.insert(result, 1, self.recover_secret.tuple_sizes[0])*/
+        self.insert(result, 1, self.input.tuple_sizes[0])*/
 
-        return self.switch();
+        return RecoverSecretOutput {
+            secret_sentence: self.switch()
+        };
     }
 
     fn verify(&self, answer: &Self::Output) -> bool {
