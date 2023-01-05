@@ -5,11 +5,10 @@ use crate::messages::output::messages_output_types::MessageOutputType;
 use crate::messages::output::message_subscribe::Subscribe;
 use crate::messages::output::message_challenge_result::ChallengeResult;
 use crate::messages::input::messages_input_types::MessageInputType;
-use crate::messages::input::message_subscribe_result::{SubscribeResult, SubscribeError};
-use std::{default, env};
+use std::env;
 use std::str;
 use std::io::{Read, Write};
-use std::net::{Shutdown, TcpStream};
+use std::net::TcpStream;
 use std::process::exit;
 use byteorder::{ByteOrder, BigEndian};
 
@@ -33,7 +32,7 @@ fn main() {
         }
     }
 
-    stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
+    //stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
 }
 
 fn get_addr() -> String {

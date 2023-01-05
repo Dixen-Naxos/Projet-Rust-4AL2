@@ -17,37 +17,33 @@ impl Nonogram {
         for i in line {
             let groups = i.len();
             let mut sum = 0;
-            let mut nb_empty = 0;
+            let mut nb_empty = nb;
             for j in i {
                 sum += *j;
             }
             if groups > 0 {
                 nb_empty = 1 + nb - sum as usize - groups;
-            } else {
-                nb_empty = nb;
             }
-            r.push(Nonogram::_create_solution(nb_empty, groups, nb, i));
+            r.push(Nonogram::_create_solution(nb_empty, groups, i));
         }
 
         r
     }
 
-    fn _create_solution(nb_empty: usize, groups: usize, nb: usize, line: &Vec<u32>) -> Vec<Vec<bool>> {
+    fn _create_solution(nb_empty: usize, groups: usize, line: &Vec<u32>) -> Vec<Vec<bool>> {
 
         let mut r: Vec<Vec<bool>> = Vec::new();
-        let mut combi: Vec<Vec<bool>> = Nonogram::_create_combi(nb_empty + groups, groups);
+        let combi: Vec<Vec<bool>> = Nonogram::_create_combi(nb_empty + groups, groups);
         let mut v: Vec<bool>;
-        let mut cnt: usize;
         let mut index: usize;
 
         for p in combi {
             v = Vec::new();
-            cnt = 0;
             index = 0;
 
             for i in 0..p.len() {
                 if p[i] {
-                    for j in 0..(*line)[index] {
+                    for _ in 0..(*line)[index] {
                         v.push(true);
                     }
                     if index < (*line).len() - 1 {
@@ -70,7 +66,7 @@ impl Nonogram {
         let mut r: Vec<Vec<bool>> = Vec::new();
         let mut a_range: Vec<bool> = Vec::new();
 
-        for i in 0..range {
+        for _ in 0..range {
             a_range.push(false);
         }
 
@@ -98,7 +94,7 @@ impl Nonogram {
         r
     }
 
-    fn _solve(mut s: Vec<u32>, cols: Vec<Vec<Vec<bool>>>, rows: Vec<Vec<u32>>, index: usize) -> Vec<Vec<bool>> {
+    fn _solve(s: Vec<u32>, cols: Vec<Vec<Vec<bool>>>, rows: Vec<Vec<u32>>, index: usize) -> Vec<Vec<bool>> {
 
         let mut grid: Vec<Vec<bool>> = Vec::new();
 
@@ -121,13 +117,12 @@ impl Nonogram {
 
         for i in 0..cols[index].len() {
             let tx1 = tx.clone();
-            let mut grid_t = grid.clone();
             let mut s_t = s.clone();
             let cols_t = cols.clone();
             let rows_t = rows.clone();
             thread::spawn(move || {
                 s_t[index] = i as u32;
-                grid_t = Nonogram::_solve(s_t.clone(), cols_t.clone(), rows_t.clone(), index + 1);
+                let grid_t = Nonogram::_solve(s_t.clone(), cols_t.clone(), rows_t.clone(), index + 1);
                 tx1.send(grid_t).unwrap();
             });
         }
@@ -205,7 +200,7 @@ impl Nonogram {
         grid
     }
 
-    fn _solve_rows_thearded(mut s: Vec<u32>, rows: &Vec<Vec<Vec<bool>>>, cols: &Vec<Vec<u32>>, index: usize) -> Vec<Vec<bool>> {
+    fn _solve_rows_thearded(s: Vec<u32>, rows: &Vec<Vec<Vec<bool>>>, cols: &Vec<Vec<u32>>, index: usize) -> Vec<Vec<bool>> {
 
         let verify = Nonogram::_verify_rows(&s, rows, cols);
         let mut grid = Vec::new();
@@ -336,7 +331,7 @@ impl Challenge for Nonogram {
 
         let mut a: Vec<u32> = Vec::new();
 
-        for i in 0..self.input.rows.len() {
+        for _ in 0..self.input.rows.len() {
             a.push(0);
         }
 
@@ -347,6 +342,6 @@ impl Challenge for Nonogram {
     }
 
     fn verify(&self, answer: &Self::Output) -> bool {
-        false
+        todo!()
     }
 }
