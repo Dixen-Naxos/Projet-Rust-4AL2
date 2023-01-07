@@ -8,7 +8,7 @@ use crate::messages::input::messages_input_types::MessageInputType;
 use std::env;
 use std::str;
 use std::io::{Read, Write};
-use std::net::TcpStream;
+use std::net::{Shutdown, TcpStream};
 use std::process::exit;
 
 fn main() {
@@ -31,7 +31,7 @@ fn main() {
         }
     }
 
-    //stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
+    stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
 }
 
 fn get_addr() -> String {

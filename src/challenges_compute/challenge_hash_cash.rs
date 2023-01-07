@@ -1,14 +1,14 @@
 use std::time::Instant;
-use md5::Digest;
+use md5::{Digest, Md5};
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
 use crate::messages::output::challenges::hash_cash_output::MD5HashCashOutput;
 
-pub struct Md5 {
+pub struct Md5HashCash {
     input : Md5HashCashInput
 }
 
-impl Challenge for Md5 {
+impl Challenge for Md5HashCash {
     type Input = Md5HashCashInput;
     type Output = MD5HashCashOutput;
 
@@ -17,21 +17,18 @@ impl Challenge for Md5 {
     }
 
     fn new(input: Self::Input) -> Self {
-        Md5 {input}
+        Md5HashCash {input}
     }
 
     fn solve(&self) -> Self::Output {
         let now = Instant::now();
 
-        let message = &self.input.message;
-
-        let message = message[1..message.len() - 1].to_string();
         let mut seed = 0;
         let mut complete_seed = "0000000000000000".to_string();
-        let hexa = hex::encode(seed.to_string());
+        let hexa = format!("{:x}", seed);
         complete_seed = complete_seed[0..16 - hexa.len()].to_string();
         complete_seed.push_str(&*hexa.to_string());
-        let mut val : Digest;
+        let mut val;
 
         let momo = (&self).input.complexity;
 
@@ -39,11 +36,12 @@ impl Challenge for Md5 {
         loop {
 
             complete_seed = "0000000000000000".to_string();
-
-            let hexa = hex::encode(seed.to_string());
+            let hexa = format!("{:x}", seed);
             complete_seed = complete_seed[0..16 - hexa.len()].to_string();
             complete_seed.push_str(&*hexa.to_string());
-            val = md5::compute(complete_seed.clone() + &message);
+            let mut md5_hasher = Md5::new();
+            md5_hasher.update(complete_seed.clone() + &*self.input.message);
+            val = md5_hasher.finalize();
             let mut binary_value = convert_to_binary_from_hex( &*format!("{:X}", val) ).to_string();
             binary_value = binary_value[0..momo as usize].to_string();
 
