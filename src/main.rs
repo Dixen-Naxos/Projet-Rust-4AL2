@@ -10,7 +10,6 @@ use std::str;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::process::exit;
-use byteorder::{ByteOrder, BigEndian};
 
 fn main() {
 
@@ -53,7 +52,7 @@ fn read (mut stream: TcpStream) -> MessageInputType {
     loop {
         let mut nb = [0; 4];
         stream.read(&mut nb).expect("Error Reading");
-        let nb = BigEndian::read_u32(&nb);
+        let nb = i32::from_be_bytes(nb);
 
         if nb > 0 {
             let mut str_bytes = vec![0; nb as usize];
@@ -76,11 +75,10 @@ fn send(mut stream: TcpStream, message: MessageOutputType){
     println!("Send : {}", str);
     let str_bytes = str.as_bytes();
 
-
     let nb: u32 = str_bytes.len() as u32;
 
     let mut buf= vec![0; 4];
-    BigEndian::write_u32(&mut buf, nb);
+    buf = Vec::from(nb.to_be_bytes());
 
     for x in str_bytes {
         buf.push(*x);
