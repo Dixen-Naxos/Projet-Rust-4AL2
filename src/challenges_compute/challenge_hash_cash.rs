@@ -25,7 +25,7 @@ impl Challenge for Md5HashCash {
 
         let mut seed = 0;
         let mut complete_seed = "0000000000000000".to_string();
-        let hexa = format!("{:x}", seed);
+        let hexa = format!("{:X}", seed);
         complete_seed = complete_seed[0..16 - hexa.len()].to_string();
         complete_seed.push_str(&*hexa.to_string());
         let mut val;
@@ -36,7 +36,7 @@ impl Challenge for Md5HashCash {
         loop {
 
             complete_seed = "0000000000000000".to_string();
-            let hexa = format!("{:x}", seed);
+            let hexa = format!("{:X}", seed);
             complete_seed = complete_seed[0..16 - hexa.len()].to_string();
             complete_seed.push_str(&*hexa.to_string());
             let mut md5_hasher = Md5::new();
