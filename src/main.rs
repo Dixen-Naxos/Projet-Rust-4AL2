@@ -16,16 +16,14 @@ fn main() {
     let addr = get_addr();
     let stream = TcpStream::connect(addr).expect("Connexion failed");
 
-    let cloned_stream = stream.try_clone().expect("Error cloning stream");
-    send(cloned_stream, MessageOutputType::Hello);
+    send(&stream, MessageOutputType::Hello);
 
     loop {
-        let message : MessageInputType = read(stream.try_clone().expect("Error cloning stream"));
+        let message : MessageInputType = read(&stream);
         let message_out = message.match_type();
         match message_out {
             Some(message) => {
-                let cloned_stream = stream.try_clone().expect("Error cloning stream");
-                send(cloned_stream, message);
+                send(&stream, message);
             },
             None => {}
         }
@@ -48,7 +46,7 @@ fn get_addr() -> String {
     addr
 }
 
-fn read (mut stream: TcpStream) -> MessageInputType {
+fn read (mut stream: &TcpStream) -> MessageInputType {
     loop {
         let mut nb = [0; 4];
         stream.read(&mut nb).expect("Error Reading");
@@ -69,7 +67,7 @@ fn read (mut stream: TcpStream) -> MessageInputType {
     }
 }
 
-fn send(mut stream: TcpStream, message: MessageOutputType){
+fn send(mut stream: &TcpStream, message: MessageOutputType){
 
     let str = &*serde_json::to_string(&message).unwrap();
     println!("Send : {}", str);
