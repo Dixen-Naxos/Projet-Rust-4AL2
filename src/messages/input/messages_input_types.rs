@@ -46,7 +46,7 @@ impl MessageInputType {
                 result.display();
                 MessageInputResult::None
             },
-            MessageInputType::EndOfGame(endOfGame) => MessageInputResult::Exit,
+            MessageInputType::EndOfGame(_) => MessageInputResult::Exit,
             _ => MessageInputResult::None
         }
     }

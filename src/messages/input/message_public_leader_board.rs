@@ -4,7 +4,7 @@ use serde::Deserialize;
 pub struct PublicPlayer {
     name: String,
     stream_id: String,
-    score: u8,
+    score: i8,
     steps: u8,
     is_active: bool,
     total_used_time: f32
