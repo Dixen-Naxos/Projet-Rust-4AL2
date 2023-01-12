@@ -1,3 +1,4 @@
+use std::num::ParseIntError;
 use std::time::Instant;
 use md5::{Digest, Md5};
 use crate::challenges_compute::challenge::Challenge;
@@ -57,8 +58,12 @@ impl Challenge for Md5HashCash {
         }
         let elapsed_time = now.elapsed();
         println!("Running boucle while took {} ms.", elapsed_time.as_millis());
+        let seed = match u64::from_str_radix(&*complete_seed, 16) {
+            Ok(seed) => seed,
+            Err(_) => 0
+        };
         let md5hash_cash_value: MD5HashCashOutput = MD5HashCashOutput {
-            seed : u64::from_str_radix(&*complete_seed, 16).expect("Ta race"),
+            seed,
             hashcode : format!("{:X}", val)
         };
         return md5hash_cash_value;

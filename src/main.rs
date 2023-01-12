@@ -14,7 +14,10 @@ use std::process::exit;
 fn main() {
 
     let addr = get_addr();
-    let stream = TcpStream::connect(addr).expect("Connexion failed");
+    let stream = match TcpStream::connect(addr) {
+        Ok(tcpStream) => tcpStream,
+        Err(_) => exit(404)
+    };
 
     send(&stream, MessageOutputType::Hello);
 
@@ -29,7 +32,7 @@ fn main() {
         }
     }
 
-    stream.shutdown(Shutdown::Both).expect("Error shutdown connexion");
+    stream.shutdown(Shutdown::Both);
 }
 
 fn get_addr() -> String {
@@ -49,12 +52,12 @@ fn get_addr() -> String {
 fn read (mut stream: &TcpStream) -> MessageInputType {
     loop {
         let mut nb = [0; 4];
-        stream.read(&mut nb).expect("Error Reading");
+        stream.read(&mut nb);
         let nb = i32::from_be_bytes(nb);
 
         if nb > 0 {
             let mut str_bytes = vec![0; nb as usize];
-            stream.read_exact(&mut str_bytes).expect("Error Reading");
+            stream.read_exact(&mut str_bytes);
             let str = str::from_utf8(&str_bytes).unwrap();
             println!("Read : {}", str);
 
@@ -82,5 +85,5 @@ fn send(mut stream: &TcpStream, message: MessageOutputType){
         buf.push(*x);
     }
 
-    stream.write(&buf).expect("Error Sending Message");
+    stream.write(&buf);
 }
