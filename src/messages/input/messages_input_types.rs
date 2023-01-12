@@ -20,13 +20,19 @@ pub enum MessageInputType {
     RoundSummary(RoundSummary)
 }
 
+pub enum MessageInputResult {
+    MessageOutputType(MessageOutputType),
+    Exit,
+    None
+}
+
 impl MessageInputType {
 
-    pub fn match_type(&self) -> Option<MessageOutputType> {
-        match self {
+    pub fn match_type(&self) -> MessageInputResult {
+        return match self {
             MessageInputType::Welcome(welcome) => {
                 println!("version : {}", welcome.version);
-                return Option::from(MessageOutputType::Subscribe(Subscribe{ name: "TEMA LA PATATE".to_string() }));
+                MessageInputResult::MessageOutputType(MessageOutputType::Subscribe(Subscribe{ name: "TEMA LA PATATE".to_string() }))
             }
             MessageInputType::Challenge(challenge) => {
                 let challenge_answer = challenge.match_challenge();
@@ -34,12 +40,14 @@ impl MessageInputType {
                     answer: challenge_answer,
                     next_target: "TEMA LA PATATE".to_string()
                 };
-                return Option::from(MessageOutputType::ChallengeResult(challenge_result))
+                MessageInputResult::MessageOutputType(MessageOutputType::ChallengeResult(challenge_result))
             }
-            MessageInputType::SubscribeResult(result) => result.display(),
-            _ => {}
+            MessageInputType::SubscribeResult(result) => {
+                result.display();
+                MessageInputResult::None
+            },
+            MessageInputType::EndOfGame(endOfGame) => MessageInputResult::Exit,
+            _ => MessageInputResult::None
         }
-
-        None
     }
 }

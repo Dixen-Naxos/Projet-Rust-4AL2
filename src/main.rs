@@ -4,7 +4,7 @@ mod challenges_compute;
 use crate::messages::output::messages_output_types::MessageOutputType;
 use crate::messages::output::message_subscribe::Subscribe;
 use crate::messages::output::message_challenge_result::ChallengeResult;
-use crate::messages::input::messages_input_types::MessageInputType;
+use crate::messages::input::messages_input_types::{MessageInputResult, MessageInputType};
 use std::env;
 use std::str;
 use std::io::{Read, Write};
@@ -25,10 +25,11 @@ fn main() {
         let message : MessageInputType = read(&stream);
         let message_out = message.match_type();
         match message_out {
-            Some(message) => {
+            MessageInputResult::MessageOutputType(message) => {
                 send(&stream, message);
-            },
-            None => {}
+            }
+            MessageInputResult::Exit => break,
+            MessageInputResult::None => {}
         }
     }
 
