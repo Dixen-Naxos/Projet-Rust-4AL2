@@ -10,6 +10,7 @@ use std::str;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::process::exit;
+use std::str::Utf8Error;
 
 fn main() {
 
@@ -59,7 +60,10 @@ fn read (mut stream: &TcpStream) -> MessageInputType {
         if nb > 0 {
             let mut str_bytes = vec![0; nb as usize];
             stream.read_exact(&mut str_bytes);
-            let str = str::from_utf8(&str_bytes).unwrap();
+            let str = match str::from_utf8(&str_bytes) {
+                Ok(str) => str,
+                Err(_) => ""
+            };
             println!("Read : {}", str);
 
             let message: MessageInputType = match serde_json::from_str(str) {
@@ -73,7 +77,10 @@ fn read (mut stream: &TcpStream) -> MessageInputType {
 
 fn send(mut stream: &TcpStream, message: MessageOutputType){
 
-    let str = &*serde_json::to_string(&message).unwrap();
+    let str = match serde_json::to_string(&message) {
+        Ok(str) => str,
+        Err(_) => "".to_string()
+    };
     println!("Send : {}", str);
     let str_bytes = str.as_bytes();
 

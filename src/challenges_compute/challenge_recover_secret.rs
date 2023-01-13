@@ -1,3 +1,4 @@
+use std::string::FromUtf8Error;
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::recover_secret_input::RecoverSecretInput;
 use crate::messages::output::challenges::recover_secret_output::RecoverSecretOutput;
@@ -56,7 +57,10 @@ impl RecoverSecret {
                                 char_swap = s_swap[k];
                                 s_swap[k] = s_swap[cnt];
                                 s_swap[cnt] = char_swap;
-                                s_return = String::from_utf8(s_swap).unwrap();
+                                s_return = match String::from_utf8(s_swap) {
+                                    Ok(str) => str,
+                                    Err(_) => "".to_string()
+                                };
                                 ended = false;
                             } else {
                                 cnt = k;

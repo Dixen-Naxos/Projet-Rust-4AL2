@@ -46,7 +46,11 @@ impl Challenge for Md5HashCash {
             let mut binary_value = convert_to_binary_from_hex( &*format!("{:X}", val) ).to_string();
             binary_value = binary_value[0..momo as usize].to_string();
 
-            if isize::from_str_radix(&*binary_value, 2).unwrap() == 0 {
+            let prefix = match isize::from_str_radix(&*binary_value, 2) {
+                Ok(prefix) => prefix,
+                Err(_) => 0
+            };
+            if prefix == 0 {
                 break
             }
             seed = seed+1;

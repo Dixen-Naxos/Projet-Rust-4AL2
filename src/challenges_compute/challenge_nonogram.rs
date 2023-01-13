@@ -123,7 +123,7 @@ impl Nonogram {
             thread::spawn(move || {
                 s_t[index] = i as u32;
                 let grid_t = Nonogram::_solve(s_t.clone(), cols_t.clone(), rows_t.clone(), index + 1);
-                tx1.send(grid_t).unwrap();
+                tx1.send(grid_t);
             });
         }
 
@@ -231,7 +231,7 @@ impl Nonogram {
             let mut s_t = s.clone();
             thread::spawn(move || {
                 s_t[index] = i as u32;
-                tx1.send(Nonogram::_solve_rows(&mut s_t, &rows_t, &cols_t, index + 1)).unwrap();
+                tx1.send(Nonogram::_solve_rows(&mut s_t, &rows_t, &cols_t, index + 1));
             });
         }
 
