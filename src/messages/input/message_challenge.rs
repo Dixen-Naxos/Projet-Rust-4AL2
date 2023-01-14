@@ -2,8 +2,10 @@ use serde::Deserialize;
 use crate::challenges_compute::challenge_hash_cash::Md5HashCash;
 use crate::challenges_compute::challenge_nonogram::Nonogram;
 use crate::challenges_compute::challenge_recover_secret::RecoverSecret;
+use crate::challenges_compute::challenge_monstrous_maze::MonstrousMaze;
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
+use crate::messages::input::challenges::monstrous_maze_input::MonstrousMazeInput;
 use crate::messages::input::challenges::nonogram_input::NonogramSolverInput;
 use crate::messages::input::challenges::recover_secret_input::RecoverSecretInput;
 use crate::messages::output::message_challenge_result::ChallengeAnswer;
@@ -12,7 +14,8 @@ use crate::messages::output::message_challenge_result::ChallengeAnswer;
 pub enum ChallengeMessage {
     MD5HashCash(Md5HashCashInput),
     RecoverSecret(RecoverSecretInput),
-    NonogramSolver(NonogramSolverInput)
+    NonogramSolver(NonogramSolverInput),
+    MonstrousMaze(MonstrousMazeInput)
 }
 
 impl ChallengeMessage {
@@ -33,6 +36,11 @@ impl ChallengeMessage {
                 let nonogram = Nonogram::new((*input).clone());
                 let answer = nonogram.solve();
                 ChallengeAnswer::NonogramSolver(answer)
+            }
+            ChallengeMessage::MonstrousMaze(input) => {
+                let nonogram = MonstrousMaze::new((*input).clone());
+                let answer = nonogram.solve();
+                ChallengeAnswer::MonstrousMaze(answer)
             }
         }
     }
