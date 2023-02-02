@@ -1,11 +1,21 @@
 name: Release
 
 on:
-  push:
-    branches: [ "Implement-releasing" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
   build:
+    needs: tests
     name: Release
     runs-on: ubuntu-latest
     steps:
