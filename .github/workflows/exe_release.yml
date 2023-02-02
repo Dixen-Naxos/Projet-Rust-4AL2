@@ -40,7 +40,7 @@ jobs:
         run: tar --directory=target/release -cf archive.tar.gz nitrogen.exe
       - name: upload
         run: |
-          $id = gh api -H "Accept: application/vnd.github+json" /repos/Dixen-Naxos/Projet-Rust-4AL2/releases/tags/${{ github.ref_name }} --jq .id
+          $id = gh api -H "Accept: application/vnd.github+json" /repos/Dixen-Naxos/Projet-Rust-4AL2/releases/tags/Release_${{ github.ref_name }} --jq .id
           curl --fail-with-body -sS  -X POST --data-binary "@archive.tar.gz" -H 'Content-Type: application/octet-stream' -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' "https://uploads.github.com/repos/Dixen-Naxos/Projet-Rust-4AL2/releases/$id/assets?name=nitrogen_${{ github.ref_name }}_x86_64-pc-windows-msvc.tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +60,7 @@ jobs:
         run: tar --directory=target/aarch64-apple-darwin/release -cf archive.tar.gz nitrogen
       - name: upload
         run: |
-          id=$(gh api -H "Accept: application/vnd.github+json" /repos/Dixen-Naxos/Projet-Rust-4AL2/releases/tags/${{ github.ref_name }} --jq .id)
+          id=$(gh api -H "Accept: application/vnd.github+json" /repos/Dixen-Naxos/Projet-Rust-4AL2/releases/tags/Release_${{ github.ref_name }} --jq .id)
           curl --fail-with-body -sS  -X POST --data-binary @"archive.tar.gz" -H 'Content-Type: application/octet-stream' -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://uploads.github.com/repos/Dixen-Naxos/Projet-Rust-4AL2/releases/$id/assets?name=nitrogen_${{ github.ref_name }}_aarch64-apple-darwin.tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
