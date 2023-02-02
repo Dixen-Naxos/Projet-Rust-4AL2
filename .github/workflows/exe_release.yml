@@ -26,6 +26,7 @@ jobs:
           draft: false
           prerelease: false
   windows-msvc-release:
+    needs: build
     name: release windows msvc
     runs-on: windows-latest
     steps:
@@ -42,6 +43,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   macos-arm-release:
+    needs: build
     name: release mac os arm release
     runs-on: macos-12
     steps:
