@@ -13,7 +13,7 @@ jobs:
       - name: Checkout master Branch
         uses: actions/checkout@v2
         with:
-          ref: 'Implement-releasing'
+          ref: ${{ github.ref_name }}
       - name: Build
         run: cargo build --verbose
       - name: Create Release
