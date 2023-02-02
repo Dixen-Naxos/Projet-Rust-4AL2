@@ -21,8 +21,6 @@ jobs:
     steps:
       - name: Checkout master Branch
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.ref_name }}
       - name: Build
         run: cargo build --verbose
       - name: Create Release
