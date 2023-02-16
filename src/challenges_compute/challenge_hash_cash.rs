@@ -1,6 +1,7 @@
 use std::num::{ParseIntError, Wrapping};
 use std::time::Instant;
 use std::convert::TryInto;
+use std::fmt::LowerHex;
 use md5::{Digest, Md5};
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
@@ -38,82 +39,79 @@ pub struct Md5HashCash {
 
 impl Md5HashCash {
 
-    fn md5_hash(message: &[u8]) -> String {
-        let mut h0: u32 = 0x67452301;
-        let mut h1: u32 = 0xEFCDAB89;
-        let mut h2: u32 = 0x98BADCFE;
-        let mut h3: u32 = 0x10325476;
+    fn md5(message: &str) -> String {
+        let message = message.as_bytes();
 
-        let mut message = Md5HashCash::add_padding(message);
+        let mut a0: u32 = 0x67452301;
+        let mut b0: u32 = 0xEFCDAB89;
+        let mut c0: u32 = 0x98BADCFE;
+        let mut d0: u32 = 0x10325476;
 
-        for i in (0..message.len()).step_by(64) {
-            let (mut a, mut b, mut c, mut d) = (h0, h1, h2, h3);
+        let mut message = Self::pad_message(message);
 
-            for j in 0..64 {
-                let f: u32;
-                let g: usize;
-
-                match j {
-                    0..=15 => {
-                        f = (b & c) | (!b & d);
-                        g = j;
-                    }
-                    16..=31 => {
-                        f = (d & b) | (!d & c);
-                        g = (5 * j + 1) % 16;
-                    }
-                    32..=47 => {
-                        f = b ^ c ^ d;
-                        g = (3 * j + 5) % 16;
-                    }
-                    48..=63 => {
-                        f = c ^ (b | !d);
-                        g = (7 * j) % 16;
-                    }
-                    _ => unreachable!(),
-                }
-
-                let temp = d;
-                d = c;
-                c = b;
-                b = Md5HashCash::left_rotate((a + f + K[j] + message[i + g] as u32).wrapping_add(S[j]), S[j]);
-                a = temp;
+        let mut buffer = [0u8; 64];
+        for i in 0..(message.len() / 64) {
+            for j in 0..16 {
+                buffer[4 * j..4 * (j + 1)].copy_from_slice(&message[i * 64 + j * 4..i * 64 + (j + 1) * 4]);
             }
 
-            h0 = h0.wrapping_add(a);
-            h1 = h1.wrapping_add(b);
-            h2 = h2.wrapping_add(c);
-            h3 = h3.wrapping_add(d);
+            let (mut a, mut b, mut c, mut d) = (a0, b0, c0, d0);
+
+            for j in 0..64 {
+                let f;
+                let g;
+                if j <= 15 {
+                    f = (b & c) | ((!b) & d);
+                    g = j;
+                } else if j <= 31 {
+                    f = (d & b) | ((!d) & c);
+                    g = (5 * j + 1) % 16;
+                } else if j <= 47 {
+                    f = b ^ c ^ d;
+                    g = (3 * j + 5) % 16;
+                } else {
+                    f = c ^ (b | (!d));
+                    g = (7 * j) % 16;
+                }
+
+                let tmp = d;
+                d = c;
+                c = b;
+                b = b.wrapping_add((a.wrapping_add(f).wrapping_add(K[j]).wrapping_add(u32::from_le_bytes(buffer[4 * g..4 * (g + 1)].try_into().unwrap()))).rotate_left(S[j]));
+                a = tmp;
+            }
+
+            a0 = a0.wrapping_add(a);
+            b0 = b0.wrapping_add(b);
+            c0 = c0.wrapping_add(c);
+            d0 = d0.wrapping_add(d);
         }
 
-        let mut result = [0; 16];
-        result[..4].copy_from_slice(&h0.to_le_bytes());
-        result[4..8].copy_from_slice(&h1.to_le_bytes());
-        result[8..12].copy_from_slice(&h2.to_le_bytes());
-        result[12..].copy_from_slice(&h3.to_le_bytes());
-        let mut hash_string = format!("{:02X}", result[0]);
-        for &byte in result[1..].iter() {
-            hash_string.push_str(&format!("{:02X}", byte));
+        let mut output = String::new();
+        for h in &[a0, b0, c0, d0] {
+            for b in &h.to_le_bytes() {
+                output += &format!("{:02X}", b);
+            }
         }
-        hash_string
+
+        output
     }
 
-    fn add_padding(message: &[u8]) -> Vec<u8> {
-        let original_length = message.len();
-        let mut message = message.to_vec();
-        message.push(0x80);
+    fn pad_message(message: &[u8]) -> Vec<u8> {
+        let initial_len = message.len();
+        let bit_len = 8 * initial_len as u64;
 
-        while message.len() % 64 != 56 {
-            message.push(0);
+        let mut padded_message = message.to_vec();
+        padded_message.push(0x80);
+
+        while (padded_message.len() * 8) % 512 != 448 {
+            padded_message.push(0);
         }
 
-        let bit_length = (original_length as u64 * 8).to_le_bytes();
-        message.extend_from_slice(&bit_length);
-        message
-    }
+        let len_bytes = bit_len.to_le_bytes();
+        padded_message.extend_from_slice(&len_bytes);
 
-    fn left_rotate(x: u32, n: u32) -> u32 {
-        (x << n) | (x >> (32 - n))
+        padded_message
     }
 }
 
@@ -148,10 +146,8 @@ impl Challenge for Md5HashCash {
             let hexa = format!("{:X}", seed);
             complete_seed = complete_seed[0..16 - hexa.len()].to_string();
             complete_seed.push_str(&*hexa.to_string());
-            let mut md5_hasher = Md5::new();
-            md5_hasher.update(complete_seed.clone() + &*self.input.message);
-            val = md5_hasher.finalize();
-            let mut binary_value = convert_to_binary_from_hex( &*format!("{:X}", val) ).to_string();
+            val = Md5HashCash::md5(&*(complete_seed.clone() + &*self.input.message));
+            let mut binary_value = convert_to_binary_from_hex( &*(val) ).to_string();
             binary_value = binary_value[0..momo as usize].to_string();
 
             let prefix = match isize::from_str_radix(&*binary_value, 2) {
@@ -174,10 +170,9 @@ impl Challenge for Md5HashCash {
             Ok(seed) => seed,
             Err(_) => 0
         };
-        println!("{}", Md5HashCash::md5_hash((complete_seed.clone() + &*self.input.message).as_bytes()));
         let md5hash_cash_value: MD5HashCashOutput = MD5HashCashOutput {
             seed,
-            hashcode : format!("{:X}", val)
+            hashcode : val
         };
         return md5hash_cash_value;
     }
@@ -211,4 +206,13 @@ fn to_binary(c: char) -> &'static str {
         'F' => "1111",
         _ => "",
     }
+}
+
+#[test]
+fn it_works() {
+    let message = "aaa";
+    let mut md5_hasher = Md5::new();
+    md5_hasher.update(message);
+    println!("{}", format!("{:X}", md5_hasher.finalize()));
+    println!("{}", Md5HashCash::md5(message))
 }
