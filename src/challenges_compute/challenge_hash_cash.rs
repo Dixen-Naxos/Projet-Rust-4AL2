@@ -146,7 +146,7 @@ impl Challenge for Md5HashCash {
             let hexa = format!("{:X}", seed);
             complete_seed = complete_seed[0..16 - hexa.len()].to_string();
             complete_seed.push_str(&*hexa.to_string());
-            val = Md5HashCash::md5(&*(complete_seed.clone() + &*self.input.message));
+            val = Self::md5(&*(complete_seed.clone() + &*self.input.message));
             let mut binary_value = convert_to_binary_from_hex( &*(val) ).to_string();
             binary_value = binary_value[0..momo as usize].to_string();
 
