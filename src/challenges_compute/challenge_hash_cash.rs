@@ -2,7 +2,6 @@ use std::num::{ParseIntError, Wrapping};
 use std::time::Instant;
 use std::convert::TryInto;
 use std::fmt::LowerHex;
-use md5::{Digest, Md5};
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
 use crate::messages::output::challenges::hash_cash_output::MD5HashCashOutput;
@@ -207,7 +206,7 @@ fn to_binary(c: char) -> &'static str {
         _ => "",
     }
 }
-
+/*
 #[test]
 fn it_works() {
     let message = "aaa";
@@ -216,3 +215,4 @@ fn it_works() {
     println!("{}", format!("{:X}", md5_hasher.finalize()));
     println!("{}", Md5HashCash::md5(message))
 }
+*/
