@@ -4,6 +4,7 @@ use std::convert::TryInto;
 use std::fmt::LowerHex;
 use std::sync::mpsc;
 use std::thread;
+use std::arch::x86_64::*;
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
 use crate::messages::output::challenges::hash_cash_output::MD5HashCashOutput;
@@ -33,6 +34,8 @@ const S: [u32; 64] = [
     4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
     6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
 ];
+
+const BLOCK_SIZE: usize = 64;
 
 pub struct Md5HashCash {
     input : Md5HashCashInput
@@ -99,18 +102,22 @@ impl Md5HashCash {
     }
 
     fn pad_message(message: &[u8]) -> Vec<u8> {
-        let initial_len = message.len();
-        let bit_len = 8 * initial_len as u64;
+        let message_len = message.len();
+        let bit_len = message_len * 8;
+        let padding_len = if message_len % 64 < 56 {
+            64 - (message_len % 64)
+        } else {
+            128 - (message_len % 64)
+        };
+        let padded_len = message_len + padding_len;
 
-        let mut padded_message = message.to_vec();
-        padded_message.push(0x80);
+        let mut padded_message = vec![0; padded_len];
+        padded_message[..message_len].copy_from_slice(message);
+        padded_message[message_len] = 0x80;
 
-        while (padded_message.len() * 8) % 512 != 448 {
-            padded_message.push(0);
+        for i in (padded_len - 8)..padded_len {
+            padded_message[i] = (bit_len >> (8 * (i - padded_len + 8))) as u8;
         }
-
-        let len_bytes = bit_len.to_le_bytes();
-        padded_message.extend_from_slice(&len_bytes);
 
         padded_message
     }
@@ -128,17 +135,16 @@ impl Md5HashCash {
             complete_seed = complete_seed[0..16 - hexa.len()].to_string();
             complete_seed.push_str(&*hexa.to_string());
             val = Self::md5(&*(complete_seed.clone() + &*message));
-            let mut binary_value = convert_to_binary_from_hex( &*(val) ).to_string();
-            binary_value = binary_value[0..momo as usize].to_string();
 
-            let prefix = match isize::from_str_radix(&*binary_value, 2) {
+            let prefix = match isize::from_str_radix(&convert_to_binary_from_hex( &*(val) )[0..momo as usize], 2) {
                 Ok(prefix) => prefix,
                 Err(_) => 0
             };
+
             if prefix == 0 {
                 return (seed, val);
             }
-            seed = seed+1;
+            seed += 1;
         }
     }
 }
@@ -164,7 +170,7 @@ impl Challenge for Md5HashCash {
             let message = self.input.message.clone();
             let momo = self.input.complexity.clone();
             thread::spawn(move || {
-                let solution = Md5HashCash::found_solution(100000000 * i, message, momo);
+                let solution = Md5HashCash::found_solution(100000 * i, message, momo);
                 tx1.send(solution);
             });
         }
