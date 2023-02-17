@@ -22,13 +22,16 @@ fn main() {
 
     send(&stream, MessageOutputType::Hello);
 
+    let mut player_to_kill = "TEMA LA PATATE".to_string();
+
     loop {
         let message : MessageInputType = read(&stream);
-        let message_out = message.match_type();
+        let message_out = message.match_type(player_to_kill.clone());
         match message_out {
             MessageInputResult::MessageOutputType(message) => {
                 send(&stream, message);
-            }
+            },
+            MessageInputResult::PlayerToKill(player) => player_to_kill = player,
             MessageInputResult::Exit => break,
             MessageInputResult::None => {}
         }

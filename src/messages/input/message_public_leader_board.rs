@@ -2,10 +2,10 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct PublicPlayer {
-    name: String,
-    stream_id: String,
-    score: i8,
-    steps: u8,
-    is_active: bool,
-    total_used_time: f32
+    pub name: String,
+    pub stream_id: String,
+    pub score: i8,
+    pub steps: u8,
+    pub is_active: bool,
+    pub total_used_time: f32
 }
