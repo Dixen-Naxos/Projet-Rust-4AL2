@@ -98,22 +98,3 @@ fn send(mut stream: &TcpStream, message: MessageOutputType){
 
     stream.write(&buf);
 }
-
-fn read (mut stream: TcpStream) -> Value {
-    let str : Value = Default::default();
-    while true {
-        let mut nb = [0;4];
-        stream.read(&mut nb).expect("Error Reading");
-        let nb = BigEndian::read_u32(&nb);
-
-        if nb > 0 {
-            let mut str = vec![0; nb as usize];
-            stream.read(&mut str).expect("Error Reading");
-            let str = str::from_utf8(&str).unwrap();
-            let str: Value = serde_json::from_str(str).expect("Error parsing json");
-            return str;
-        }
-
-    }
-    str
-}
