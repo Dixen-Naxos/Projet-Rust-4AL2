@@ -2,6 +2,8 @@ use std::num::{ParseIntError, Wrapping};
 use std::time::Instant;
 use std::convert::TryInto;
 use std::fmt::LowerHex;
+use std::sync::mpsc;
+use std::thread;
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
 use crate::messages::output::challenges::hash_cash_output::MD5HashCashOutput;
@@ -112,6 +114,33 @@ impl Md5HashCash {
 
         padded_message
     }
+
+    fn found_solution(mut seed: i32, message: String, momo: i32) -> (i32, String) {
+
+        let mut complete_seed;
+        let mut val;
+        let mut hexa;
+
+        loop {
+
+            complete_seed = "0000000000000000".to_string();
+            hexa = format!("{:X}", seed);
+            complete_seed = complete_seed[0..16 - hexa.len()].to_string();
+            complete_seed.push_str(&*hexa.to_string());
+            val = Self::md5(&*(complete_seed.clone() + &*message));
+            let mut binary_value = convert_to_binary_from_hex( &*(val) ).to_string();
+            binary_value = binary_value[0..momo as usize].to_string();
+
+            let prefix = match isize::from_str_radix(&*binary_value, 2) {
+                Ok(prefix) => prefix,
+                Err(_) => 0
+            };
+            if prefix == 0 {
+                return (seed, val);
+            }
+            seed = seed+1;
+        }
+    }
 }
 
 impl Challenge for Md5HashCash {
@@ -127,52 +156,30 @@ impl Challenge for Md5HashCash {
     }
 
     fn solve(&self) -> Self::Output {
-        let now = Instant::now();
 
-        let mut seed = 0;
-        let mut complete_seed = "0000000000000000".to_string();
-        let hexa = format!("{:X}", seed);
-        complete_seed = complete_seed[0..16 - hexa.len()].to_string();
-        complete_seed.push_str(&*hexa.to_string());
-        let mut val;
+        let (tx, rx) = mpsc::channel();
 
-        let momo = (&self).input.complexity;
-
-
-        loop {
-
-            complete_seed = "0000000000000000".to_string();
-            let hexa = format!("{:X}", seed);
-            complete_seed = complete_seed[0..16 - hexa.len()].to_string();
-            complete_seed.push_str(&*hexa.to_string());
-            val = Self::md5(&*(complete_seed.clone() + &*self.input.message));
-            let mut binary_value = convert_to_binary_from_hex( &*(val) ).to_string();
-            binary_value = binary_value[0..momo as usize].to_string();
-
-            let prefix = match isize::from_str_radix(&*binary_value, 2) {
-                Ok(prefix) => prefix,
-                Err(_) => 0
-            };
-            if prefix == 0 {
-                break
-            }
-            seed = seed+1;
-
-            if now.elapsed().as_millis() > 1900 {
-                println!("Viré");
-                break
-            }
+        for i in 0..3 {
+            let tx1 = tx.clone();
+            let message = self.input.message.clone();
+            let momo = self.input.complexity.clone();
+            thread::spawn(move || {
+                let solution = Md5HashCash::found_solution(100000000 * i, message, momo);
+                tx1.send(solution);
+            });
         }
-        let elapsed_time = now.elapsed();
-        println!("Running boucle while took {} ms.", elapsed_time.as_millis());
-        let seed = match u64::from_str_radix(&*complete_seed, 16) {
-            Ok(seed) => seed,
-            Err(_) => 0
-        };
-        let md5hash_cash_value: MD5HashCashOutput = MD5HashCashOutput {
-            seed,
-            hashcode : val
-        };
+
+        let mut md5hash_cash_value = MD5HashCashOutput { seed: 0, hashcode: "".to_string() };
+
+        for received in rx {
+            md5hash_cash_value = MD5HashCashOutput {
+                seed: received.0 as u64,
+                hashcode : received.1
+            };
+            break;
+        }
+
+
         return md5hash_cash_value;
     }
 
