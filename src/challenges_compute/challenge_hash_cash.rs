@@ -5,6 +5,7 @@ use std::fmt::LowerHex;
 use std::sync::mpsc;
 use std::thread;
 use std::arch::x86_64::*;
+use md5::{Digest, Md5};
 use crate::challenges_compute::challenge::Challenge;
 use crate::messages::input::challenges::hash_cash_input::Md5HashCashInput;
 use crate::messages::output::challenges::hash_cash_output::MD5HashCashOutput;
@@ -122,7 +123,7 @@ impl Md5HashCash {
         padded_message
     }
 
-    fn found_solution(mut seed: i32, message: String, momo: i32) -> (i32, String) {
+    fn found_solution_hand(mut seed: i32, message: String, momo: i32) -> (i32, String) {
 
         let mut complete_seed;
         let mut val;
@@ -143,6 +144,35 @@ impl Md5HashCash {
 
             if prefix == 0 {
                 return (seed, val);
+            }
+            seed += 1;
+        }
+    }
+
+    fn found_solution(mut seed: i32, message: String, momo: i32) -> (i32, String) {
+
+        let mut complete_seed;
+        let mut val;
+        let mut hexa;
+        let mut md5_hasher;
+
+        loop {
+
+            complete_seed = "0000000000000000".to_string();
+            hexa = format!("{:X}", seed);
+            complete_seed = complete_seed[0..16 - hexa.len()].to_string();
+            complete_seed.push_str(&*hexa.to_string());
+            md5_hasher = Md5::new();
+            md5_hasher.update(complete_seed.clone() + &*message);
+            val = md5_hasher.finalize();
+
+            let prefix = match isize::from_str_radix(&convert_to_binary_from_hex( &*format!("{:X}", val) )[0..momo as usize], 2) {
+                Ok(prefix) => prefix,
+                Err(_) => 0
+            };
+
+            if prefix == 0 {
+                return (seed, format!("{:X}", val));
             }
             seed += 1;
         }
