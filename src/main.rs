@@ -5,15 +5,36 @@ use crate::messages::output::messages_output_types::MessageOutputType;
 use crate::messages::output::message_subscribe::Subscribe;
 use crate::messages::output::message_challenge_result::ChallengeResult;
 use crate::messages::input::messages_input_types::{MessageInputResult, MessageInputType};
-use std::env;
+use std::{env, thread};
 use std::str;
 use std::io::{Read, Write};
 use std::net::{Shutdown, TcpStream};
 use std::process::exit;
 use std::str::Utf8Error;
+use std::sync::mpsc;
 
 fn main() {
+/*
+    let sessions = Vec::from(["TEMA LA PATATE".to_string(), "Rust".to_string()]);
 
+    let (tx, rx) = mpsc::channel();
+
+    for session in sessions {
+        let tx1 = tx.clone();
+        thread::spawn(move || {
+            start_game(session.clone());
+            tx1.send(session);
+        });
+    }
+
+    for received in rx {
+        println!("{} is dead", received);
+    }*/
+
+    start_game("TEMA LA PATATE".to_string());
+}
+
+fn start_game(self_name: String) {
     let addr = get_addr();
     let stream = match TcpStream::connect(addr) {
         Ok(tcpStream) => tcpStream,
@@ -22,11 +43,11 @@ fn main() {
 
     send(&stream, MessageOutputType::Hello);
 
-    let mut player_to_kill = "TEMA LA PATATE".to_string();
+    let mut player_to_kill = self_name.clone();
 
     loop {
         let message : MessageInputType = read(&stream);
-        let message_out = message.match_type(player_to_kill.clone());
+        let message_out = message.match_type(player_to_kill.clone(), &self_name);
         match message_out {
             MessageInputResult::MessageOutputType(message) => {
                 send(&stream, message);

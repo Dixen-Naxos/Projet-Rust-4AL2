@@ -29,14 +29,12 @@ pub enum MessageInputResult {
 
 impl MessageInputType {
 
-    pub fn match_type(&self, player_to_kill: String) -> MessageInputResult {
-
-        let self_name: String = String::from("TEMA LA PATATE");
+    pub fn match_type(&self, player_to_kill: String, self_name: &String) -> MessageInputResult {
 
         return match self {
             MessageInputType::Welcome(welcome) => {
                 println!("version : {}", welcome.version);
-                MessageInputResult::MessageOutputType(MessageOutputType::Subscribe(Subscribe{ name: self_name }))
+                MessageInputResult::MessageOutputType(MessageOutputType::Subscribe(Subscribe{ name: self_name.clone() }))
             },
             MessageInputType::Challenge(challenge) => {
                 let challenge_answer = challenge.match_challenge();
@@ -50,7 +48,7 @@ impl MessageInputType {
                 let mut player_index = 0;
 
                 for i in 1..players.len() {
-                    if players[i].is_active && (!players[player_index].is_active || players[player_index].name == self_name || players[i].score > players[player_index].score ) {
+                    if players[i].is_active && (!players[player_index].is_active || players[player_index].name == *self_name || players[i].score > players[player_index].score ) {
                         player_index = i;
                     }
                 }
