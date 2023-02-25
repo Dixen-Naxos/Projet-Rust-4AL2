@@ -14,7 +14,7 @@ use std::str::Utf8Error;
 use std::sync::mpsc;
 
 fn main() {
-/*
+
     let sessions = Vec::from(["TEMA LA PATATE".to_string(), "Rust".to_string()]);
 
     let (tx, rx) = mpsc::channel();
@@ -29,9 +29,9 @@ fn main() {
 
     for received in rx {
         println!("{} is dead", received);
-    }*/
+    }
 
-    start_game("TEMA LA PATATE".to_string());
+    //start_game("TEMA LA PATATE".to_string());
 }
 
 fn start_game(self_name: String) {

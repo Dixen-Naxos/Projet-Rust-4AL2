@@ -48,7 +48,7 @@ impl MessageInputType {
                 let mut player_index = 0;
 
                 for i in 1..players.len() {
-                    if players[i].is_active && (!players[player_index].is_active || players[player_index].name == *self_name || players[i].score > players[player_index].score ) {
+                    if players[player_index].name == *self_name || (players[i].is_active && (!players[player_index].is_active || players[i].score > players[player_index].score )) {
                         player_index = i;
                     }
                 }
