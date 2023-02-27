@@ -27,7 +27,7 @@ fn main() {
         });
     }
 
-    for received in rx {
+    for receivaed in rx {
         println!("{} is dead", received);
     }
 
